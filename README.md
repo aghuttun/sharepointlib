@@ -81,7 +81,7 @@ To test the development package: [Testing](#testing)
 5. Commit your changes: `git commit -am 'Add some feature'`
 6. Push to the branch: `git push origin my-new-feature`
 7. Ensure github actions are passing tests
-8. Email me at jfuruness@gmail.com if it's been a while and I haven't seen it
+8. Email me at portela.paulo@gmail.com if it's been a while and I haven't seen it
 
 ## License
 
