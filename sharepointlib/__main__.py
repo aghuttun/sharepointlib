@@ -1,7 +1,7 @@
-from .print_me_funcs import print_me
+from .sharepoint import SharePoint
 
 def main():
-    print_me()
+    print("sharepointlib is a library for interacting with SharePoint.")
 
 if __name__ == "__main__":
     main()

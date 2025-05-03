@@ -1,1 +1,3 @@
-from .print_me_funcs import print_me
+from .sharepoint import SharePoint
+
+__all__ = ["SharePoint"]

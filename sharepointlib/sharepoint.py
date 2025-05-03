@@ -1,6 +1,3 @@
-def print_me():
-    print("Hi my name is print_me_funcs.py")
-
 """
 This library provides access to some SharePoint functionalities.
 Its features are designed to remain generic and should not be modified to meet the specific needs of individual projects.
@@ -26,7 +23,6 @@ from pydantic import BaseModel, Field, parse_obj_as, validator
 import requests
 from urllib.parse import quote
 
-# COMMAND ----------
 
 class SharePoint(object):
     @dataclasses.dataclass
@@ -48,7 +44,10 @@ class SharePoint(object):
         """
         Initializes the SharePoint client with the provided credentials and configuration.
 
-        Example: sharepoint = SharePoint(client_id="X", tenant_id="X", client_secret="X")
+        Example: sharepoint = SharePoint(client_id="X", 
+                                         tenant_id="X", 
+                                         client_secret="X",
+                                         sp_domain="companygroup.sharepoint.com")
 
         Args:
             client_id (str): The Azure client ID used for authentication.
