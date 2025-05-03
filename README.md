@@ -27,17 +27,7 @@ from a script:
 ```python
 import sharepointlib
 
-sharepointlib.print_name()
-```
-
-```bash
-Console.output("Hello World");
-```
-
-From the command line:
-
-```bash
-sharepointlib
+sharepoint = sharepointlib.SharePoint(client_id="X", tenant_id="X", client_secret="X", sp_domain="companygroup.sharepoint.com")
 ```
 
 ## Installation
