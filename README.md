@@ -6,7 +6,7 @@
 
 # sharepointlib
 
-### If you like the repo, it would be awesome if you could add a star to it! It really helps out the visibility. Also for any questions at all we'd love to hear from you at portela.paulo@gmail.com
+This library provides access to some SharePoint functionalities.
 
 * [Description](#package-description)
 * [Usage](#usage)
@@ -27,7 +27,75 @@ from a script:
 ```python
 import sharepointlib
 
-sharepoint = sharepointlib.SharePoint(client_id="X", tenant_id="X", client_secret="X", sp_domain="companygroup.sharepoint.com")
+client_id = "123..."
+tenant_id = "123..."
+client_secret = "xxxx"
+sp_domain = "companygroup.sharepoint.com"
+
+sp_site_name = "My Site"
+sp_site_id = "companygroup.sharepoint.com,1233124124"
+sp_site_drive_id = "b!1234567890"
+
+# Initialize SharePoint client
+sharepoint = sharepointlib.SharePoint(client_id=client_id, 
+                                      tenant_id=tenant_id, 
+                                      client_secret=client_secret, 
+                                      sp_domain=sp_domain)
+```
+
+```python
+# Gets the site ID for a given site name
+result = sharepoint.get_site_info(name=sp_site_name)
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Gets the hostname and site details for a specified site ID
+result = sharepoint.get_hostname_info(site_id=sp_site_id)
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Gets the hostname and site details for a specified site ID
+result = sharepoint.get_hostname_info(site_id=sp_site_id)
+if result.status_code == 200:
+    print(result.content)
+```
+
+Drives:
+
+```python
+# Gets a list of the Drive IDs for a given site ID
+result = sharepoint.list_drives(site_id=sp_site_id)
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Gets the folder ID for a specified folder within a drive ID
+result = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
+                                 path="Sellout/Support")
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# List content (files and folders) of a specific folder
+result = sharepoint.list_dir(drive_id=sp_site_drive_id, 
+                             path="Sellout/Support")
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Creates a new folder in a specified drive ID
+result = sharepoint.create_dir(drive_id=sp_site_drive_id, 
+                               path="Sellout/Support",
+                               name="Test")
+if result.status_code in (200, 201):
+    print(result.content)
 ```
 
 ## Installation

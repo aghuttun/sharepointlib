@@ -303,7 +303,7 @@ class SharePoint(object):
     # DRIVES
     def list_drives(self, site_id: str, save_as: str | None = None) -> Response:
         """
-        Gets a list of the Drive IDs for a given site.
+        Gets a list of the Drive IDs for a given site ID.
 
         This method sends a request to the Microsoft Graph API to retrieve the Drive IDs
         associated with the specified site ID. If the request is successful, it will return
@@ -373,7 +373,7 @@ class SharePoint(object):
     
     def get_dir_info(self, drive_id: str, path: str | None = None, save_as: str | None = None) -> Response:
         """
-        Gets the folder ID for a specified folder within a drive.
+        Gets the folder ID for a specified folder within a drive ID.
 
         This method sends a request to the Microsoft Graph API to retrieve the folder ID
         associated with the specified folder path within the given drive ID. If the request
@@ -448,7 +448,7 @@ class SharePoint(object):
 
     def list_dir(self, drive_id: str, path: str | None = None, save_as: str | None = None) -> Response:
         """
-        List content (files and folders) of a folder.
+        List content (files and folders) of a specific folder.
 
         This method sends a request to the Microsoft Graph API to retrieve the list of 
         children (files and folders) within a specified folder in a drive. If the request 
@@ -529,9 +529,9 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def create_dir(self, drive_id: str, path: str, save_as: str | None = None) -> Response:
+    def create_dir(self, drive_id: str, path: str, name: str, save_as: str | None = None) -> Response:
         """
-        Creates a new folder in a specified drive.
+        Creates a new folder in a specified drive ID.
 
         This method sends a request to the Microsoft Graph API to create a new folder 
         at the specified path within the given drive ID. If the request is successful, 
@@ -539,11 +539,13 @@ class SharePoint(object):
         Optionally, the response can be saved to a JSON file.
 
         Example: create_dir(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                            path="Sellout/Support/Test")
+                            path="Sellout/Support/Test",
+                            name="Stock")
 
         Args:
             drive_id (str): The ID of the drive where the folder will be created.
             path (str): The path of the new folder to be created.
+            name (str): The name of the new folder to be created.
             save_as (str, optional): The file path where the response will be saved in JSON format.
                                       If not provided, the response will not be saved.
 
@@ -583,7 +585,7 @@ class SharePoint(object):
 
         # Request body
         # @microsoft.graph.conflictBehavior: fail, rename, replace
-        data = {"name": "NewFolder",
+        data = {"name": name,
                 "folder": {},
                 "@microsoft.graph.conflictBehavior": "replace"}
         
