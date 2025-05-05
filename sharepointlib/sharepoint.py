@@ -59,6 +59,8 @@ class SharePoint(object):
         # Init logging
         self.__logger = logging.getLogger(name=__name__)
         self.__logger.setLevel(level=logging.INFO)
+        handler = logging.StreamHandler()
+        self.__logger.addHandler(handler)
 
         # Init variables
         self.__session: requests.Session = requests.Session()
@@ -539,8 +541,8 @@ class SharePoint(object):
         Optionally, the response can be saved to a JSON file.
 
         Example: create_dir(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                            path="Sellout/Support/Test",
-                            name="Stock")
+                            path="Sellout/Support",
+                            name="Archive")
 
         Args:
             drive_id (str): The ID of the drive where the folder will be created.
@@ -610,7 +612,7 @@ class SharePoint(object):
     
     def delete_dir(self, drive_id: str, path: str) -> Response:
         """
-        Deletes a folder from a specified drive.
+        Deletes a folder from a specified drive ID.
 
         This method sends a request to the Microsoft Graph API to delete a folder located at the 
         specified path within the given drive ID. If the request is successful, it will return 
@@ -618,7 +620,7 @@ class SharePoint(object):
         be saved to a JSON file.
 
         Example: delete_dir(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                            path="Sellout/Support/Test")
+                            path="Sellout/Support/Archive")
 
         Args:
             drive_id (str): The ID of the drive containing the folder to be deleted.
@@ -661,7 +663,7 @@ class SharePoint(object):
     
     def get_file_info(self, drive_id: str, filename: str, save_as: str | None = None) -> Response:
         """
-        Retrieves information about a specific file in a SharePoint drive.
+        Retrieves information about a specific file in a drive ID.
 
         This method sends a request to the Microsoft Graph API to obtain details about a file 
         located at the specified path within the given drive ID. If the request is successful, 
@@ -737,14 +739,14 @@ class SharePoint(object):
 
     def copy_file(self, drive_id: str, filename: str, target_path: str) -> Response:
         """
-        Copy a file from one folder to another within the same drive.
+        Copy a file from one folder to another within the same drive ID.
 
         This method sends a request to the Microsoft Graph API to copy a file from the specified 
         source path to the destination path within the given drive ID. It works only on the same drive. 
         If the request is successful, it will return the HTTP status code and the details of the moved file.
 
         Example: copy_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                           filename="Sellout/Support/Sellout.txt", 
+                           filename="Sellout/Support/Sellout.xlsx", 
                            target_path="Sellout/Support/Archive")
 
         Args:
@@ -794,7 +796,7 @@ class SharePoint(object):
     
     def move_file(self, drive_id: str, filename: str, target_path: str, save_as: str | None = None) -> Response:
         """
-        Moves a file from one folder to another within the same drive.
+        Moves a file from one folder to another within the same drive ID.
 
         This method sends a request to the Microsoft Graph API to move a file from the specified 
         source path to the destination path within the given drive ID. It works only on the same drive. 
@@ -802,7 +804,7 @@ class SharePoint(object):
         Optionally, the response can be saved to a JSON file.
 
         Example: move_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                           filename="Sellout/Support/Sellout.txt", 
+                           filename="Sellout/Support/Sellout.xlsx", 
                            target_path="Sellout/Support/Archive")
 
         Args:

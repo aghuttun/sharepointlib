@@ -1,8 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/aghuttun.svg)](https://badge.fury.io/py/aghuttun)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aghuttun)](https://pypi.org/project/aghuttun/)
 ![Linux](https://img.shields.io/badge/os-Linux-blue.svg)
-![macOS Intel](https://img.shields.io/badge/os-macOS_Intel-lightgrey.svg)
-![macOS ARM](https://img.shields.io/badge/os-macOS_ARM-lightgrey.svg)
+![macOS Silicon](https://img.shields.io/badge/os-macOS_Silicon-lightgrey.svg)
 
 # sharepointlib
 
@@ -93,8 +92,48 @@ if result.status_code == 200:
 # Creates a new folder in a specified drive ID
 result = sharepoint.create_dir(drive_id=sp_site_drive_id, 
                                path="Sellout/Support",
+                               name="Archive")
+if result.status_code in (200, 201):
+    print(result.content)
+
+result = sharepoint.create_dir(drive_id=sp_site_drive_id, 
+                               path="Sellout/Support",
                                name="Test")
 if result.status_code in (200, 201):
+    print(result.content)
+```
+
+```python
+# Deletes a folder from a specified drive ID
+result = sharepoint.delete_dir(drive_id=sp_site_drive_id, 
+                               path="Sellout/Support/Test")
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Retrieves information about a specific file in a drive ID
+result = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
+                                  filename="Sellout/Support/Sellout.xlsx")
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Copy a file from one folder to another within the same drive ID
+result = sharepoint.copy_file(drive_id=sp_site_drive_id, 
+                              filename="Sellout/Support/Sellout.xlsx",
+                              target_path="Sellout/Support/Archive")
+if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Moves a file from one folder to another within the same drive ID
+result = sharepoint.move_file(drive_id=sp_site_drive_id, 
+                              filename="Sellout/Support/Sellout.xlsx", 
+                              target_path="Sellout")
+if result.status_code == 200:
     print(result.content)
 ```
 

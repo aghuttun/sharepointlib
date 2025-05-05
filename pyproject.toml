@@ -35,7 +35,4 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/aghuttun/sharepointlib"
-Documentation = "https://github.com/aghuttun/sharepointlib/README.md"
-
-[project.scripts]
-sharepointlib = "sharepointlib.__main__:main"
+Documentation = "https://github.com/aghuttun/sharepointlib/blob/main/README.md"
