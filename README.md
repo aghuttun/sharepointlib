@@ -1,8 +1,3 @@
-[![PyPI version](https://badge.fury.io/py/aghuttun.svg)](https://badge.fury.io/py/aghuttun)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aghuttun)](https://pypi.org/project/aghuttun/)
-![Linux](https://img.shields.io/badge/os-Linux-blue.svg)
-![macOS Silicon](https://img.shields.io/badge/os-macOS_Silicon-lightgrey.svg)
-
 # sharepointlib
 
 This library provides access to some SharePoint functionalities.
