@@ -110,7 +110,7 @@ if result.status_code in (200, 201):
 # Deletes a folder from a specified drive ID
 result = sharepoint.delete_dir(drive_id=sp_site_drive_id, 
                                path="Sellout/Support/Test")
-if result.status_code == 204:
+if result.status_code in (200, 204):
     print("Folder deleted successfully")
 ```
 
@@ -118,7 +118,7 @@ if result.status_code == 204:
 # Retrieves information about a specific file in a drive ID
 result = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
                                   filename="Sellout/Support/Sellout.xlsx")
-if result.status_code == 200:
+if result.status_code in (200, 202):
     print(result.content)
 ```
 
@@ -127,8 +127,8 @@ if result.status_code == 200:
 result = sharepoint.copy_file(drive_id=sp_site_drive_id, 
                               filename="Sellout/Support/Sellout.xlsx",
                               target_path="Sellout/Support/Archive")
-if result.status_code == 200:
-    print(result.content)
+if result.status_code in (200, 202):
+    print("File copied successfully")
 ```
 
 ```python
@@ -144,7 +144,7 @@ if result.status_code == 200:
 # Deletes a file from a specified drive ID
 result = sharepoint.delete_file(drive_id=sp_site_drive_id, 
                                 filename="Sellout/Support/Sellout.xlsx")
-if result.status_code == 204:
+if result.status_code in (200, 204):
     print("File deleted successfully")
 ```
 
@@ -152,7 +152,7 @@ if result.status_code == 204:
 # Downloads a file from a specified remote path in a drive ID to a local path
 result = sharepoint.download_file(drive_id=sp_site_drive_id, 
                                   remote_path=r"Sellout/Sellout.xlsx", 
-                                  local_path=r"C:\Users\admin\Downloads\Sellout.xlsx")
+                                  local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx")
 if result.status_code == 200:
     print("File downloaded successfully")
 ```
@@ -160,10 +160,10 @@ if result.status_code == 200:
 ```python
 # Uploads a file to a specified remote path in a SharePoint drive ID
 result = sharepoint.upload_file(drive_id=sp_site_drive_id, 
-                                local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",
+                                local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx",
                                 remote_path=r"Sellout/Support/Sellout.xlsx")
-if result.status_code == 201:
-    print(result.content)
+if result.status_code in (200, 201):
+    print("File uploaded successfully")
 ```
 
 ## Installation
