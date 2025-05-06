@@ -17,6 +17,8 @@ This library provides access to some SharePoint functionalities.
 
 Microsoft SharePoint interaction (Under development)!
 
+Note: This packages uses pydantic~=1.0!
+
 ## Usage
 
 * [sharepointlib](#sharepointlib)
