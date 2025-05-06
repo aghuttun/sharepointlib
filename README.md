@@ -47,123 +47,123 @@ sharepoint = sharepointlib.SharePoint(client_id=client_id,
 
 ```python
 # Gets the site ID for a given site name
-result = sharepoint.get_site_info(name=sp_site_name)
-if result.status_code == 200:
-    print(result.content)
+response = sharepoint.get_site_info(name=sp_site_name)
+if response.status_code == 200:
+    print(response.content)
 ```
 
 ```python
 # Gets the hostname and site details for a specified site ID
-result = sharepoint.get_hostname_info(site_id=sp_site_id)
-if result.status_code == 200:
-    print(result.content)
+response = sharepoint.get_hostname_info(site_id=sp_site_id)
+if response.status_code == 200:
+    print(response.content)
 ```
 
 ```python
 # Gets the hostname and site details for a specified site ID
-result = sharepoint.get_hostname_info(site_id=sp_site_id)
-if result.status_code == 200:
-    print(result.content)
+response = sharepoint.get_hostname_info(site_id=sp_site_id)
+if response.status_code == 200:
+    print(response.content)
 ```
 
 Drives:
 
 ```python
 # Gets a list of the Drive IDs for a given site ID
-result = sharepoint.list_drives(site_id=sp_site_id)
-if result.status_code == 200:
-    print(result.content)
+response = sharepoint.list_drives(site_id=sp_site_id)
+if response.status_code == 200:
+    print(response.content)
 ```
 
 ```python
 # Gets the folder ID for a specified folder within a drive ID
-result = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
-                                 path="Sellout/Support")
-if result.status_code == 200:
-    print(result.content)
+response = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
+                                   path="Sellout/Support")
+if response.status_code == 200:
+    print(response.content)
 ```
 
 ```python
 # List content (files and folders) of a specific folder
-result = sharepoint.list_dir(drive_id=sp_site_drive_id, 
-                             path="Sellout/Support")
-if result.status_code == 200:
-    print(result.content)
+response = sharepoint.list_dir(drive_id=sp_site_drive_id, 
+                               path="Sellout/Support")
+if response.status_code == 200:
+    print(response.content)
 ```
 
 ```python
 # Creates a new folder in a specified drive ID
-result = sharepoint.create_dir(drive_id=sp_site_drive_id, 
-                               path="Sellout/Support",
-                               name="Archive")
-if result.status_code in (200, 201):
-    print(result.content)
+response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
+                                 path="Sellout/Support",
+                                 name="Archive")
+if response.status_code in (200, 201):
+    print(response.content)
 
-result = sharepoint.create_dir(drive_id=sp_site_drive_id, 
-                               path="Sellout/Support",
-                               name="Test")
-if result.status_code in (200, 201):
-    print(result.content)
+response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
+                                 path="Sellout/Support",
+                                 name="Test")
+if response.status_code in (200, 201):
+    print(response.content)
 ```
 
 ```python
 # Deletes a folder from a specified drive ID
-result = sharepoint.delete_dir(drive_id=sp_site_drive_id, 
-                               path="Sellout/Support/Test")
-if result.status_code in (200, 204):
+response = sharepoint.delete_dir(drive_id=sp_site_drive_id, 
+                                 path="Sellout/Support/Test")
+if response.status_code in (200, 204):
     print("Folder deleted successfully")
 ```
 
 ```python
 # Retrieves information about a specific file in a drive ID
-result = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
-                                  filename="Sellout/Support/Sellout.xlsx")
-if result.status_code in (200, 202):
-    print(result.content)
+response = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
+                                    filename="Sellout/Support/Sellout.xlsx")
+if response.status_code in (200, 202):
+    print(response.content)
 ```
 
 ```python
 # Copy a file from one folder to another within the same drive ID
-result = sharepoint.copy_file(drive_id=sp_site_drive_id, 
-                              filename="Sellout/Support/Sellout.xlsx",
-                              target_path="Sellout/Support/Archive")
-if result.status_code in (200, 202):
+response = sharepoint.copy_file(drive_id=sp_site_drive_id, 
+                                filename="Sellout/Support/Sellout.xlsx",
+                                target_path="Sellout/Support/Archive")
+if response.status_code in (200, 202):
     print("File copied successfully")
 ```
 
 ```python
 # Moves a file from one folder to another within the same drive ID
-result = sharepoint.move_file(drive_id=sp_site_drive_id, 
-                              filename="Sellout/Support/Sellout1.xlsx", 
-                              target_path="Sellout")
-if result.status_code == 200:
-    print(result.content)
+response = sharepoint.move_file(drive_id=sp_site_drive_id, 
+                                filename="Sellout/Support/Sellout1.xlsx", 
+                                target_path="Sellout")
+if response.status_code == 200:
+    print(response.content)
 ```
 
 ```python
 # Deletes a file from a specified drive ID
-result = sharepoint.delete_file(drive_id=sp_site_drive_id, 
-                                filename="Sellout/Support/Sellout.xlsx")
-if result.status_code in (200, 204):
+response = sharepoint.delete_file(drive_id=sp_site_drive_id, 
+                                  filename="Sellout/Support/Sellout.xlsx")
+if response.status_code in (200, 204):
     print("File deleted successfully")
 ```
 
 ```python
 # Downloads a file from a specified remote path in a drive ID to a local path
-result = sharepoint.download_file(drive_id=sp_site_drive_id, 
-                                  remote_path=r"Sellout/Sellout.xlsx", 
-                                  local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx")
-if result.status_code == 200:
+response = sharepoint.download_file(drive_id=sp_site_drive_id, 
+                                    remote_path=r"Sellout/Sellout.xlsx", 
+                                    local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx")
+if response.status_code == 200:
     print("File downloaded successfully")
 ```
 
 ```python
 # Uploads a file to a specified remote path in a SharePoint drive ID
-result = sharepoint.upload_file(drive_id=sp_site_drive_id, 
-                                local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx",
-                                remote_path=r"Sellout/Support/Sellout.xlsx")
-if result.status_code in (200, 201):
-    print("File uploaded successfully")
+response = sharepoint.upload_file(drive_id=sp_site_drive_id, 
+                                  local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx",
+                                  remote_path=r"Sellout/Support/Sellout.xlsx")
+if response.status_code in (200, 201):
+    print(response.content)
 ```
 
 ## Installation

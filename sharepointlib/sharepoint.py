@@ -1002,7 +1002,7 @@ class SharePoint(object):
         
         return self.Response(status_code=response.status_code, content=content)
     
-    def upload_file(self, drive_id: str, local_path: str, remote_path: str) -> Response:
+    def upload_file(self, drive_id: str, local_path: str, remote_path: str, save_as: str | None = None) -> Response:
         """
         Uploads a file to a specified remote path in a SharePoint drive ID.
 
@@ -1019,6 +1019,8 @@ class SharePoint(object):
             drive_id (str): The ID of the drive where the file will be uploaded.
             local_path (str): The local file path of the file to be uploaded.
             remote_path (str): The path in the SharePoint drive where the file will be uploaded, including the filename.
+            save_as (str, optional): If provided, the results will be saved to a JSON file 
+                                      at the specified path.
 
         Returns:
             Response: An instance of the Response class containing the HTTP status code 
@@ -1042,11 +1044,23 @@ class SharePoint(object):
         remote_path_quote = quote(string=remote_path)
         url_query = fr"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
 
+        # Pydantic output data structure
+        class DataStructure(BaseModel):
+            id: str = Field(alias="id")
+            name: str = Field(None, alias="name")
+            size: int = Field(None, alias="size")
+        
+        # Query parameters
+        # Pydantic v1
+        alias_list = [field.alias for field in DataStructure.__fields__.values() if field.field_info.alias is not None]
+        params = {"$select": ",".join(alias_list)}
+
         # Request body
         data = open(file=local_path, mode="rb").read()
 
         # Request
-        response = self.__session.put(url=url_query, headers=headers, data=data, verify=True)
+        response = self.__session.put(url=url_query, headers=headers, params=params, data=data, verify=True)
+        print(response.content)
 
         # Log response code
         self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -1055,6 +1069,12 @@ class SharePoint(object):
         content = None
         if response.status_code in (200, 201):
             self.__logger.info(msg="Request successful")
+
+            # Export response to json file
+            self._export_to_json(content=response.content, save_as=save_as)
+
+            # Deserialize json (scalar values)
+            content = self._handle_response(response=response, model=DataStructure, rtype="scalar")
         
         return self.Response(status_code=response.status_code, content=content)
 
