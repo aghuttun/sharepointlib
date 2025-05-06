@@ -10,7 +10,7 @@ This library provides access to some SharePoint functionalities.
 
 ## Package Description
 
-Microsoft SharePoint interaction (Under development)!
+Microsoft SharePoint client (Under development)!
 
 Note: This packages uses pydantic~=1.0!
 
