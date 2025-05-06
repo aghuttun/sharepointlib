@@ -25,6 +25,9 @@ from a script:
 
 ```python
 import sharepointlib
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 client_id = "123..."
 tenant_id = "123..."
@@ -107,8 +110,8 @@ if result.status_code in (200, 201):
 # Deletes a folder from a specified drive ID
 result = sharepoint.delete_dir(drive_id=sp_site_drive_id, 
                                path="Sellout/Support/Test")
-if result.status_code == 200:
-    print(result.content)
+if result.status_code == 204:
+    print("Folder deleted successfully")
 ```
 
 ```python
@@ -131,9 +134,35 @@ if result.status_code == 200:
 ```python
 # Moves a file from one folder to another within the same drive ID
 result = sharepoint.move_file(drive_id=sp_site_drive_id, 
-                              filename="Sellout/Support/Sellout.xlsx", 
+                              filename="Sellout/Support/Sellout1.xlsx", 
                               target_path="Sellout")
 if result.status_code == 200:
+    print(result.content)
+```
+
+```python
+# Deletes a file from a specified drive ID
+result = sharepoint.delete_file(drive_id=sp_site_drive_id, 
+                                filename="Sellout/Support/Sellout.xlsx")
+if result.status_code == 204:
+    print("File deleted successfully")
+```
+
+```python
+# Downloads a file from a specified remote path in a drive ID to a local path
+result = sharepoint.download_file(drive_id=sp_site_drive_id, 
+                                  remote_path=r"Sellout/Sellout.xlsx", 
+                                  local_path=r"C:\Users\admin\Downloads\Sellout.xlsx")
+if result.status_code == 200:
+    print("File downloaded successfully")
+```
+
+```python
+# Uploads a file to a specified remote path in a SharePoint drive ID
+result = sharepoint.upload_file(drive_id=sp_site_drive_id, 
+                                local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",
+                                remote_path=r"Sellout/Support/Sellout.xlsx")
+if result.status_code == 201:
     print(result.content)
 ```
 

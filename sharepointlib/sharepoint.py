@@ -892,7 +892,7 @@ class SharePoint(object):
 
     def delete_file(self, drive_id: str, filename: str) -> Response:
         """
-        Deletes a file from a specified drive.
+        Deletes a file from a specified drive ID.
 
         This method sends a request to the Microsoft Graph API to delete a file located at the 
         specified path within the given drive ID. If the request is successful, it will return 
@@ -943,7 +943,7 @@ class SharePoint(object):
 
     def download_file(self, drive_id: str, remote_path: str, local_path: str) -> Response:
         """
-        Downloads a file from a specified remote path in a SharePoint drive to a local path.
+        Downloads a file from a specified remote path in a drive ID to a local path.
 
         This method sends a request to the Microsoft Graph API to download a file located at the 
         specified remote path within the given drive ID. The file will be saved to the specified 
@@ -1002,9 +1002,9 @@ class SharePoint(object):
         
         return self.Response(status_code=response.status_code, content=content)
     
-    def upload_file(self, drive_id: str, local_path: str, remote_path: str, save_as: str | None = None) -> Response:
+    def upload_file(self, drive_id: str, local_path: str, remote_path: str) -> Response:
         """
-        Uploads a file to a specified remote path in a SharePoint drive.
+        Uploads a file to a specified remote path in a SharePoint drive ID.
 
         This method sends a request to the Microsoft Graph API to upload a file from the local path 
         to the specified remote path within the given drive ID. If the folder does not exist in 
@@ -1019,8 +1019,6 @@ class SharePoint(object):
             drive_id (str): The ID of the drive where the file will be uploaded.
             local_path (str): The local file path of the file to be uploaded.
             remote_path (str): The path in the SharePoint drive where the file will be uploaded, including the filename.
-            save_as (str, optional): If provided, the results will be saved to a JSON file 
-                                      at the specified path.
 
         Returns:
             Response: An instance of the Response class containing the HTTP status code 
@@ -1066,14 +1064,8 @@ class SharePoint(object):
 
         # Output
         content = None
-        if response.status_code == 200:
+        if response.status_code == 201:
             self.__logger.info(msg="Request successful")
-
-            # Export response to json file
-            self._export_to_json(content=response.content, save_as=save_as)
-
-            # Deserialize json (scalar values)
-            content = self._handle_response(response=response, model=DataStructure, rtype="scalar")
         
         return self.Response(status_code=response.status_code, content=content)
 
