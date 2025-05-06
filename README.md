@@ -134,8 +134,8 @@ if response.status_code in (200, 202):
 ```python
 # Moves a file from one folder to another within the same drive ID
 response = sharepoint.move_file(drive_id=sp_site_drive_id, 
-                                filename="Sellout/Support/Sellout1.xlsx", 
-                                target_path="Sellout")
+                                filename="Sellout/Sellout.xlsx", 
+                                target_path="Sellout/Support/Archive")
 if response.status_code == 200:
     print(response.content)
 ```
@@ -151,8 +151,8 @@ if response.status_code in (200, 204):
 ```python
 # Downloads a file from a specified remote path in a drive ID to a local path
 response = sharepoint.download_file(drive_id=sp_site_drive_id, 
-                                    remote_path=r"Sellout/Sellout.xlsx", 
-                                    local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx")
+                                    remote_path=r"Sellout/Support/Archive/Sellout.xlsx",
+                                    local_path=r"C:\Users\admin\Downloads\Sellout.xlsx")
 if response.status_code == 200:
     print("File downloaded successfully")
 ```
@@ -160,8 +160,8 @@ if response.status_code == 200:
 ```python
 # Uploads a file to a specified remote path in a SharePoint drive ID
 response = sharepoint.upload_file(drive_id=sp_site_drive_id, 
-                                  local_path=r"C:\Users\portepau\Downloads\Sellout.xlsx",
-                                  remote_path=r"Sellout/Support/Sellout.xlsx")
+                                  local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",
+                                  remote_path=r"Sellout/Support/Archive/Sellout.xlsx")
 if response.status_code in (200, 201):
     print(response.content)
 ```
