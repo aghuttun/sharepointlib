@@ -1,7 +1,5 @@
 # sharepointlib
 
-This library provides access to some SharePoint functionalities.
-
 * [Description](#package-description)
 * [Usage](#usage)
 * [Installation](#installation)
@@ -9,7 +7,7 @@ This library provides access to some SharePoint functionalities.
 
 ## Package Description
 
-Microsoft SharePoint client using [requests](https://pypi.org/project/requests/) (Under development)!
+Microsoft SharePoint client Python package that uses the [requests](https://pypi.org/project/requests/) library.
 
 > [!IMPORTANT]  
 > This packages uses pydantic~=1.0!
