@@ -10,9 +10,10 @@ This library provides access to some SharePoint functionalities.
 
 ## Package Description
 
-Microsoft SharePoint client (Under development)!
+Microsoft SharePoint client using [requests](https://pypi.org/project/requests/) (Under development)!
 
-Note: This packages uses pydantic~=1.0!
+> [!IMPORTANT]  
+> This packages uses pydantic~=1.0!
 
 ## Usage
 
