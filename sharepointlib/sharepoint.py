@@ -941,6 +941,87 @@ class SharePoint(object):
         
         return self.Response(status_code=response.status_code, content=content)
 
+    def rename_file(self, drive_id: str, filename: str, new_name: str, save_as: str | None = None) -> Response:
+        """
+        Renames a file in a specified drive ID.
+
+        This method sends a request to the Microsoft Graph API to rename a file located at the
+        specified path within the given drive ID. If the request is successful, it will return
+        the HTTP status code and the details of the renamed file. Optionally, the response can
+        be saved to a JSON file.
+
+        Example: rename_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                             filename="Sellout/Support/Archive/Sellout.xlsx",
+                             new_name="Sellout_Renamed.xlsx")
+
+        Args:
+            drive_id (str): The ID of the drive containing the file to be renamed.
+            filename (str): The full path of the file to be renamed, including the filename.
+            new_name (str): The new name for the file.
+            save_as (str, optional): The file path where the response will be saved in JSON format.
+                                      If not provided, the response will not be saved.
+
+        Returns:
+            Response: An instance of the Response class containing the HTTP status code and
+                    the content, which includes the details of the renamed file.
+        """
+        self.__logger.info(msg="Renames a file in a specified drive")
+        self.__logger.info(msg=drive_id)
+        self.__logger.info(msg=filename)
+        self.__logger.info(msg=new_name)
+
+        # Configuration
+        token = self.__configuration.token
+        api_domain = self.__configuration.api_domain
+        api_version = self.__configuration.api_version
+        # Request headers
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+        # Request query
+        filename_quote = quote(string=filename)
+        url_query = fr"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{filename_quote}"
+
+        # Request body
+        data = {"name": new_name}
+
+        # Pydantic output data structure
+        class DataStructure(BaseModel):
+            id: str = Field(alias="id")
+            name: str = Field(alias="name")
+            web_url: str = Field(None, alias="webUrl")
+            size: int = Field(None, alias="size")
+            created_date_time: datetime = Field(alias="createdDateTime")
+            last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
+
+        # Query parameters
+        # Pydantic v1
+        alias_list = [field.alias for field in DataStructure.__fields__.values() if field.field_info.alias is not None]
+        params = {"$select": ",".join(alias_list)}
+
+        # Request
+        response = self.__session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
+        print(response.content)
+
+        # Log response code
+        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+
+        # Output
+        content = None
+        if response.status_code == 200:
+            self.__logger.info(msg="Request successful")
+
+            # Export response to json file
+            self._export_to_json(content=response.content, save_as=save_as)
+
+            # Deserialize json (scalar values)
+            content = self._handle_response(response=response, model=DataStructure, rtype="scalar")
+
+        return self.Response(status_code=response.status_code, content=content)
+    
     def download_file(self, drive_id: str, remote_path: str, local_path: str) -> Response:
         """
         Downloads a file from a specified remote path in a drive ID to a local path.

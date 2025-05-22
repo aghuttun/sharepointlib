@@ -1,9 +1,9 @@
 # sharepointlib
 
-* [Description](#package-description)
-* [Usage](#usage)
-* [Installation](#installation)
-* [License](#license)
+- [Description](#package-description)
+- [Usage](#usage)
+- [Installation](#installation)
+- [License](#license)
 
 ## Package Description
 
@@ -14,13 +14,14 @@ Microsoft SharePoint client Python package that uses the [requests](https://pypi
 
 ## Usage
 
-* [sharepointlib](#sharepointlib)
+- [sharepointlib](#sharepointlib)
 
 from a script:
 
 ```python
 import sharepointlib
 import logging
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -44,21 +45,16 @@ sharepoint = sharepointlib.SharePoint(client_id=client_id,
 # Gets the site ID for a given site name
 response = sharepoint.get_site_info(name=sp_site_name)
 if response.status_code == 200:
-    print(response.content)
+    df = pd.DataFrame(response.content)
+    print(df)
 ```
 
 ```python
 # Gets the hostname and site details for a specified site ID
 response = sharepoint.get_hostname_info(site_id=sp_site_id)
 if response.status_code == 200:
-    print(response.content)
-```
-
-```python
-# Gets the hostname and site details for a specified site ID
-response = sharepoint.get_hostname_info(site_id=sp_site_id)
-if response.status_code == 200:
-    print(response.content)
+    df = pd.DataFrame(response.content)
+    print(df)
 ```
 
 Drives:
@@ -67,7 +63,8 @@ Drives:
 # Gets a list of the Drive IDs for a given site ID
 response = sharepoint.list_drives(site_id=sp_site_id)
 if response.status_code == 200:
-    print(response.content)
+    df = pd.DataFrame(response.content)
+    print(df)
 ```
 
 ```python
@@ -75,7 +72,8 @@ if response.status_code == 200:
 response = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
                                    path="Sellout/Support")
 if response.status_code == 200:
-    print(response.content)
+    df = pd.DataFrame(response.content)
+    print(df)
 ```
 
 ```python
@@ -83,7 +81,8 @@ if response.status_code == 200:
 response = sharepoint.list_dir(drive_id=sp_site_drive_id, 
                                path="Sellout/Support")
 if response.status_code == 200:
-    print(response.content)
+    df = pd.DataFrame(response.content)
+    print(df)
 ```
 
 ```python
@@ -92,13 +91,15 @@ response = sharepoint.create_dir(drive_id=sp_site_drive_id,
                                  path="Sellout/Support",
                                  name="Archive")
 if response.status_code in (200, 201):
-    print(response.content)
+    df = pd.DataFrame(response.content)
+    print(df)
 
 response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
                                  path="Sellout/Support",
                                  name="Test")
 if response.status_code in (200, 201):
-    print(response.content)
+    df = pd.DataFrame(response.content)
+    print(df)
 ```
 
 ```python
@@ -114,7 +115,8 @@ if response.status_code in (200, 204):
 response = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
                                     filename="Sellout/Support/Sellout.xlsx")
 if response.status_code in (200, 202):
-    print(response.content)
+    df = pd.DataFrame([response.content.dict()])
+    print(df)
 ```
 
 ```python
@@ -129,24 +131,35 @@ if response.status_code in (200, 202):
 ```python
 # Moves a file from one folder to another within the same drive ID
 response = sharepoint.move_file(drive_id=sp_site_drive_id, 
-                                filename="Sellout/Sellout.xlsx", 
-                                target_path="Sellout/Support/Archive")
+                                filename="Sellout/Support/Archive/Sellout.xlsx", 
+                                target_path="Sellout")
 if response.status_code == 200:
-    print(response.content)
+    df = pd.DataFrame([response.content.dict()])
+    print(df)
 ```
 
 ```python
 # Deletes a file from a specified drive ID
 response = sharepoint.delete_file(drive_id=sp_site_drive_id, 
-                                  filename="Sellout/Support/Sellout.xlsx")
+                                  filename="Sellout/Sellout.xlsx")
 if response.status_code in (200, 204):
     print("File deleted successfully")
 ```
 
 ```python
+# Renames a file in a specified drive ID.
+response = sharepoint.rename_file(drive_id=sp_site_drive_id, 
+                                  filename="Sellout/Support/Archive/Sellout.xlsx", 
+                                  new_name="Sellout_New_Name.xlsx")
+if response.status_code == 200:
+    df = pd.DataFrame([response.content.dict()])
+    print(df)
+```
+
+```python
 # Downloads a file from a specified remote path in a drive ID to a local path
 response = sharepoint.download_file(drive_id=sp_site_drive_id, 
-                                    remote_path=r"Sellout/Support/Archive/Sellout.xlsx",
+                                    remote_path=r"Sellout/Support/Sellout.xlsx",
                                     local_path=r"C:\Users\admin\Downloads\Sellout.xlsx")
 if response.status_code == 200:
     print("File downloaded successfully")
@@ -163,7 +176,7 @@ if response.status_code in (200, 201):
 
 ## Installation
 
-* [sharepointlib](#sharepointlib)
+- [sharepointlib](#sharepointlib)
 
 Install python and pip if you have not already.
 
@@ -194,6 +207,6 @@ To test the development package: [Testing](#testing)
 
 ## License
 
-* [sharepointlib](#sharepointlib)
+- [sharepointlib](#sharepointlib)
 
 BSD License (see license file)
