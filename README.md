@@ -26,7 +26,7 @@ import pandas as pd
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 client_id = "123..."
-tenant_id = "123..."
+tenant_id = "456..."
 client_secret = "xxxx"
 sp_domain = "companygroup.sharepoint.com"
 
@@ -187,14 +187,13 @@ Install python and pip if you have not already.
 Then run:
 
 ```bash
-pip3 install pip --upgrade
-pip3 install wheel
+pip install pip --upgrade
 ```
 
 For production:
 
 ```bash
-pip3 install sharepointlib
+pip install sharepointlib
 ```
 
 This will install the package and all of it's python dependencies.
@@ -204,7 +203,7 @@ If you want to install the project for development:
 ```bash
 git clone https://github.com/aghuttun/sharepointlib.git
 cd sharepointlib
-pip3 install -e .[dev]
+pip install -e ".[dev]"
 ```
 
 To test the development package: [Testing](#testing)

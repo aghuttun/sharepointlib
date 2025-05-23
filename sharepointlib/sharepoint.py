@@ -21,24 +21,25 @@ import logging
 # TypeAdapter v2 vs parse_obj_as v1
 from pydantic import BaseModel, Field, parse_obj_as, validator
 import requests
+from typing import Any, Type
 from urllib.parse import quote
 
 
 class SharePoint(object):
     @dataclasses.dataclass
     class Configuration(object):
-        api_domain: str = None
-        api_version: str = None
-        sp_domain: str = None
-        client_id: str = None
-        tenant_id: str = None
-        client_secret: str = None
-        token: str = None
+        api_domain: str | None = None
+        api_version: str | None = None
+        sp_domain: str | None = None
+        client_id: str | None = None
+        tenant_id: str | None = None
+        client_secret: str | None = None
+        token: str | None = None
     
     @dataclasses.dataclass
     class Response:
         status_code: int
-        content: list | dict | str | None = None
+        content: Any = None
     
     def __init__(self, client_id: str, tenant_id: str, client_secret: str, sp_domain: str) -> None:
         """
@@ -112,7 +113,7 @@ class SharePoint(object):
         if response.status_code == 200:
             self.__configuration.token = json.loads(response.content.decode("utf-8"))["access_token"]
     
-    def _export_to_json(self, content: bytes, save_as: str) -> None:
+    def _export_to_json(self, content: bytes, save_as: str | None) -> None:
         """
         Export response content to a JSON file.
 
@@ -128,7 +129,7 @@ class SharePoint(object):
             with open(file=save_as, mode="wb") as file:
                 file.write(content)
     
-    def _handle_response(self, response: requests.Response, model: BaseModel, rtype: str = "scalar") -> BaseModel | list[BaseModel]:
+    def _handle_response(self, response: requests.Response, model: Type[BaseModel], rtype: str = "scalar") -> BaseModel | list[BaseModel]:
         """
         Handles the response from an API request and deserializes the JSON content.
 
@@ -153,6 +154,7 @@ class SharePoint(object):
             # Deserialize json
             content_raw = response.json()["value"]
             # Pydantic v1
+            # return parse_obj_as(list[model], content_raw)
             return [dict(data) for data in parse_obj_as(list[model], content_raw)]
 
     def get_site_info(self, name: str, save_as: str | None = None) -> Response:
@@ -476,7 +478,7 @@ class SharePoint(object):
         class DataStructure(BaseModel):
             id: str = Field(alias="id")
             name: str = Field(alias="name")
-            extension: str = None
+            extension: str | None = None
             size: int = Field(None, alias="size")
             web_url: str = Field(None, alias="webUrl")
             folder: dict = Field(None, alias="folder")
