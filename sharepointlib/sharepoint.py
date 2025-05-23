@@ -44,11 +44,6 @@ class SharePoint(object):
         """
         Initializes the SharePoint client with the provided credentials and configuration.
 
-        Example: sharepoint = SharePoint(client_id="X", 
-                                         tenant_id="X", 
-                                         client_secret="X",
-                                         sp_domain="companygroup.sharepoint.com")
-
         Args:
             client_id (str): The Azure client ID used for authentication.
             tenant_id (str): The Azure tenant ID associated with the client.
@@ -169,8 +164,6 @@ class SharePoint(object):
         return the site ID along with the HTTP status code. Optionally, the response can
         be saved to a JSON file.
 
-        Example: get_site_info(name="EuropeMarketDataAnalytics")
-
         Args:
             name (str): The name of the site for which to retrieve the site ID.
             save_as (str, optional): The file path where the response will be saved in JSON format.
@@ -239,8 +232,6 @@ class SharePoint(object):
         site name, and other relevant details associated with the specified site ID. 
         If the request is successful, it will return the site information along with 
         the HTTP status code. Optionally, the response can be saved to a JSON file.
-
-        Example: get_hostname_info(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1")
 
         Args:
             site_id (str): The ID of the site for which to retrieve the hostname and details.
@@ -312,8 +303,6 @@ class SharePoint(object):
         the Drive IDs along with the HTTP status code. Optionally, the response can be saved
         to a JSON file.
 
-        Example: list_drives(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1")
-
         Args:
             site_id (str): The ID of the site for which to retrieve the Drive IDs.
             save_as (str, optional): The file path where the response will be saved in JSON format.
@@ -381,9 +370,6 @@ class SharePoint(object):
         associated with the specified folder path within the given drive ID. If the request
         is successful, it will return the folder ID along with the HTTP status code. 
         Optionally, the response can be saved to a JSON file.
-
-        Example: get_dir_info(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-                              path="Sellout/Support")
 
         Args:
             drive_id (str): The ID of the drive where the folder is located.
@@ -455,9 +441,6 @@ class SharePoint(object):
         This method sends a request to the Microsoft Graph API to retrieve the list of 
         children (files and folders) within a specified folder in a drive. If the request 
         is successful, it will return the HTTP status code and a list of the children.
-
-        Example: list_dir(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                          path="Sellout/Support")
 
         Args:
             drive_id (str): The ID of the drive containing the folder.
@@ -540,10 +523,6 @@ class SharePoint(object):
         it will return the HTTP status code and the details of the created folder. 
         Optionally, the response can be saved to a JSON file.
 
-        Example: create_dir(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                            path="Sellout/Support",
-                            name="Archive")
-
         Args:
             drive_id (str): The ID of the drive where the folder will be created.
             path (str): The path of the new folder to be created.
@@ -619,9 +598,6 @@ class SharePoint(object):
         the HTTP status code and the details of the deleted folder. Optionally, the response can 
         be saved to a JSON file.
 
-        Example: delete_dir(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                            path="Sellout/Support/Archive")
-
         Args:
             drive_id (str): The ID of the drive containing the folder to be deleted.
             path (str): The full path of the folder to be deleted.
@@ -669,11 +645,6 @@ class SharePoint(object):
         located at the specified path within the given drive ID. If the request is successful, 
         it will return the file information along with the HTTP status code. Optionally, the 
         response can be saved to a JSON file.
-
-        Example: get_file_info(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                               filename="Sellout/Support/Sellout.txt")
-
-        Example to get id: response.content.id
 
         Args:
             drive_id (str): The ID of the drive containing the file.
@@ -745,10 +716,6 @@ class SharePoint(object):
         source path to the destination path within the given drive ID. It works only on the same drive. 
         If the request is successful, it will return the HTTP status code and the details of the moved file.
 
-        Example: copy_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                           filename="Sellout/Support/Sellout.xlsx", 
-                           target_path="Sellout/Support/Archive")
-
         Args:
             drive_id (str): The ID of the drive containing the file to be moved.
             filename (str): The full path of the file to be moved, including the filename.
@@ -802,10 +769,6 @@ class SharePoint(object):
         source path to the destination path within the given drive ID. It works only on the same drive. 
         If the request is successful, it will return the HTTP status code and the details of the moved file. 
         Optionally, the response can be saved to a JSON file.
-
-        Example: move_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                           filename="Sellout/Support/Sellout.xlsx", 
-                           target_path="Sellout/Support/Archive")
 
         Args:
             drive_id (str): The ID of the drive containing the file to be moved.
@@ -899,9 +862,6 @@ class SharePoint(object):
         the HTTP status code and the details of the deleted file. Optionally, the response can 
         be saved to a JSON file.
 
-        Example: delete_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                             filename="Sellout/Support/Sellout.txt")
-
         Args:
             drive_id (str): The ID of the drive containing the file to be deleted.
             filename (str): The full path of the file to be deleted, including the filename.
@@ -949,10 +909,6 @@ class SharePoint(object):
         specified path within the given drive ID. If the request is successful, it will return
         the HTTP status code and the details of the renamed file. Optionally, the response can
         be saved to a JSON file.
-
-        Example: rename_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-                             filename="Sellout/Support/Archive/Sellout.xlsx",
-                             new_name="Sellout_Renamed.xlsx")
 
         Args:
             drive_id (str): The ID of the drive containing the file to be renamed.
@@ -1031,14 +987,6 @@ class SharePoint(object):
         local path on the machine running the code. If the request is successful, it will return 
         the HTTP status code and a response indicating the result of the operation.
 
-        Example: download_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                               remote_path=r"Sellout/Support/Sellout.xlsm", 
-                               local_path=r"/Workspace/Users/admin@admin.com/Sellout.xlsm")
-        
-        Examples for local_path (databricks):
-          local_path=r"/Workspace/Users/admin@admin.com/Sellout.xlsm"
-          local_path=r"/Volumes/lakehouse/sadp/Sellout.xlsm"
-
         Args:
             drive_id (str): The ID of the drive containing the file.
             remote_path (str): The path of the file in the SharePoint drive, including the filename.
@@ -1091,10 +1039,6 @@ class SharePoint(object):
         to the specified remote path within the given drive ID. If the folder does not exist in 
         SharePoint, it will be created. If the request is successful, it will return the HTTP status 
         code and a response indicating the result of the operation.
-
-        Example: upload_file(drive_id="b!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 
-                             local_path="/Workspace/Users/admin@admin.com/Sellout.png", 
-                             remote_path="Sellout/Support/Sellout.png")
 
         Args:
             drive_id (str): The ID of the drive where the file will be uploaded.

@@ -115,6 +115,7 @@ if response.status_code in (200, 204):
 response = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
                                     filename="Sellout/Support/Sellout.xlsx")
 if response.status_code in (200, 202):
+    print(response.content.id)
     df = pd.DataFrame([response.content.dict()])
     print(df)
 ```
@@ -158,6 +159,9 @@ if response.status_code == 200:
 
 ```python
 # Downloads a file from a specified remote path in a drive ID to a local path
+# Examples for local_path (databricks):
+#   local_path=r"/Workspace/Users/admin@admin.com/Sellout.xlsm"
+#   local_path=r"/Volumes/lakehouse/sadp/Sellout.xlsm"
 response = sharepoint.download_file(drive_id=sp_site_drive_id, 
                                     remote_path=r"Sellout/Support/Sellout.xlsx",
                                     local_path=r"C:\Users\admin\Downloads\Sellout.xlsx")
