@@ -92,14 +92,14 @@ response = sharepoint.create_dir(drive_id=sp_site_drive_id,
                                  path="Sellout/Support",
                                  name="Archive")
 if response.status_code in (200, 201):
-    df = pd.DataFrame([item.dict() for item in response.content])
+    df = pd.DataFrame([response.content.dict()])
     print(df)
 
 response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
                                  path="Sellout/Support",
                                  name="Test")
 if response.status_code in (200, 201):
-    df = pd.DataFrame([item.dict() for item in response.content])
+    df = pd.DataFrame([response.content.dict()])
     print(df)
 ```
 
