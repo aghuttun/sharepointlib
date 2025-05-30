@@ -53,24 +53,24 @@ class SharePoint(object):
                               Example: "companygroup.sharepoint.com"
         """
         # Init logging
-        self.__logger = logging.getLogger(name=__name__)
-        self.__logger.setLevel(level=logging.INFO)
+        self._logger = logging.getLogger(name=__name__)
+        self._logger.setLevel(level=logging.INFO)
         handler = logging.StreamHandler()
-        self.__logger.addHandler(handler)
+        self._logger.addHandler(handler)
 
         # Init variables
-        self.__session: requests.Session = requests.Session()
+        self._session: requests.Session = requests.Session()
         api_domain = "graph.microsoft.com"
         api_version = "v1.0"
 
         # Credentials/Configuration
-        self.__configuration = self.Configuration(api_domain=api_domain,
-                                                  api_version=api_version,
-                                                  sp_domain=sp_domain,
-                                                  client_id=client_id, 
-                                                  tenant_id=tenant_id,
-                                                  client_secret=client_secret,
-                                                  token=None)
+        self._configuration = self.Configuration(api_domain=api_domain,
+                                                 api_version=api_version,
+                                                 sp_domain=sp_domain,
+                                                 client_id=client_id, 
+                                                 tenant_id=tenant_id,
+                                                 client_secret=client_secret,
+                                                 token=None)
         
         # Authenticate
         self.auth()
@@ -79,8 +79,8 @@ class SharePoint(object):
         """
         Cleans the house at the exit.
         """
-        self.__logger.info(msg="Cleans the house at the exit")
-        self.__session.close()
+        self._logger.info(msg="Cleans the house at the exit")
+        self._session.close()
     
     def auth(self) -> None:
         """
@@ -89,29 +89,29 @@ class SharePoint(object):
         using the client credentials flow. The token is stored in the Configuration
         dataclass for subsequent API requests.
         """
-        self.__logger.info(msg="Authentication")
+        self._logger.info(msg="Authentication")
 
         # Request headers
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         # Authorization URL
-        url_auth = f"https://login.microsoftonline.com/{self.__configuration.tenant_id}/oauth2/v2.0/token"
+        url_auth = f"https://login.microsoftonline.com/{self._configuration.tenant_id}/oauth2/v2.0/token"
 
         # Request body
         body = {"grant_type": "client_credentials",
-                "client_id": self.__configuration.client_id,
-                "client_secret": self.__configuration.client_secret,
+                "client_id": self._configuration.client_id,
+                "client_secret": self._configuration.client_secret,
                 "scope": "https://graph.microsoft.com/.default"}
 
         # Request
-        response = self.__session.post(url=url_auth, data=body, headers=headers, verify=True)
+        response = self._session.post(url=url_auth, data=body, headers=headers, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Return valid response
         if response.status_code == 200:
-            self.__configuration.token = json.loads(response.content.decode("utf-8"))["access_token"]
+            self._configuration.token = json.loads(response.content.decode("utf-8"))["access_token"]
     
     def _export_to_json(self, content: bytes, save_as: str | None) -> None:
         """
@@ -125,7 +125,7 @@ class SharePoint(object):
             save_as (str): The file path where the JSON content will be saved. If None, the content will not be saved.
         """
         if save_as is not None:
-            self.__logger.info(msg="Exports response to JSON file.")
+            self._logger.info(msg="Exports response to JSON file.")
             with open(file=save_as, mode="wb") as file:
                 file.write(content)
     
@@ -154,8 +154,8 @@ class SharePoint(object):
             # Deserialize json
             content_raw = response.json()["value"]
             # Pydantic v1
-            # return parse_obj_as(list[model], content_raw)
-            return [dict(data) for data in parse_obj_as(list[model], content_raw)]
+            return parse_obj_as(list[model], content_raw)
+            # return [dict(data) for data in parse_obj_as(list[model], content_raw)]
 
     def get_site_info(self, name: str, save_as: str | None = None) -> Response:
         """
@@ -175,14 +175,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the site ID and other relevant information.
         """
-        self.__logger.info(msg="Gets the site ID for a given site name")
-        self.__logger.info(msg=name)
+        self._logger.info(msg="Gets the site ID for a given site name")
+        self._logger.info(msg=name)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
-        sp_domain = self.__configuration.sp_domain
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
+        sp_domain = self._configuration.sp_domain
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -208,15 +208,15 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -244,13 +244,13 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the hostname, site name, and other relevant information.
         """
-        self.__logger.info(msg="Gets the hostname and site details for a specified site ID")
-        self.__logger.info(msg=site_id)
+        self._logger.info(msg="Gets the hostname and site details for a specified site ID")
+        self._logger.info(msg=site_id)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -277,15 +277,15 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -314,13 +314,13 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the list of Drive IDs and other relevant information.
         """
-        self.__logger.info(msg="Gets a list of the Drive IDs for a given site")
-        self.__logger.info(msg=site_id)
+        self._logger.info(msg="Gets a list of the Drive IDs for a given site")
+        self._logger.info(msg=site_id)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
         
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -346,15 +346,15 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -384,14 +384,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the folder ID and other relevant information.
         """
-        self.__logger.info(msg="Gets the folder ID for a specified folder within a drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=path)
+        self._logger.info(msg="Gets the folder ID for a specified folder within a drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=path)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -418,15 +418,15 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -455,14 +455,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code 
                       and a list of children (files and folders) within the specified folder.
         """
-        self.__logger.info(msg="List content (files and folders) of a folder")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=path)
+        self._logger.info(msg="List content (files and folders) of a folder")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=path)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -497,16 +497,16 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -536,14 +536,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the details of the created folder.
         """
-        self.__logger.info(msg="Creates a new folder in a specified drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=path)
+        self._logger.info(msg="Creates a new folder in a specified drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=path)
         
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -573,15 +573,15 @@ class SharePoint(object):
                 "@microsoft.graph.conflictBehavior": "replace"}
         
         # Request
-        response = self.__session.post(url=url_query, headers=headers, params=params, json=data, verify=True)
+        response = self._session.post(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code in (200, 201):
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -608,14 +608,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the details of the deleted folder.
         """
-        self.__logger.info(msg="Deletes a folder from a specified drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=path)
+        self._logger.info(msg="Deletes a folder from a specified drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=path)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -627,15 +627,15 @@ class SharePoint(object):
         url_query = fr"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
 
         # Request
-        response = self.__session.delete(url=url_query, headers=headers, verify=True)
+        response = self._session.delete(url=url_query, headers=headers, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code in (200, 204):
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
         
         return self.Response(status_code=response.status_code, content=content)
     
@@ -659,14 +659,14 @@ class SharePoint(object):
                       the content, which includes the file details such as ID, name, web URL, size,
                       created date, and last modified date.
         """
-        self.__logger.info(msg="Retrieves information about a specific file")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=filename)
+        self._logger.info(msg="Retrieves information about a specific file")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=filename)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -692,15 +692,15 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code in (200, 202):
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -726,15 +726,15 @@ class SharePoint(object):
         Returns:
             Response: An instance of the Response class containing the HTTP status code.
         """
-        self.__logger.info(msg="Copy a file from one folder to another within the same drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=filename)
-        self.__logger.info(msg=target_path)
+        self._logger.info(msg="Copy a file from one folder to another within the same drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=filename)
+        self._logger.info(msg=target_path)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -751,15 +751,15 @@ class SharePoint(object):
                                     "path": f"/drives/{drive_id}/root:/{target_path}"}}
 
         # Request
-        response = self.__session.post(url=url_query, headers=headers, json=data, verify=True)
+        response = self._session.post(url=url_query, headers=headers, json=data, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code in (200, 202):
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
     
         return self.Response(status_code=response.status_code, content=content)
     
@@ -783,10 +783,10 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the details of the moved file.
         """
-        self.__logger.info(msg="Moves a file from one folder to another within the same drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=filename)
-        self.__logger.info(msg=target_path)
+        self._logger.info(msg="Moves a file from one folder to another within the same drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=filename)
+        self._logger.info(msg=target_path)
         
         # Source file: Uses the get_file_info function to obtain the source file_id
         file_info_response = self.get_file_info(drive_id=drive_id, filename=filename, save_as=None)
@@ -807,9 +807,9 @@ class SharePoint(object):
         folder_id = dir_info_response.content.id
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -837,15 +837,15 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
+        response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -872,14 +872,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the details of the deleted file.
         """
-        self.__logger.info(msg="Deletes a file from a specified drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=filename)
+        self._logger.info(msg="Deletes a file from a specified drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=filename)
         
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -891,15 +891,15 @@ class SharePoint(object):
         url_query = fr"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{filename_quote}"
         
         # Request
-        response = self.__session.delete(url=url_query, headers=headers, verify=True)
+        response = self._session.delete(url=url_query, headers=headers, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code in (200, 204):
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
         
         return self.Response(status_code=response.status_code, content=content)
 
@@ -923,15 +923,15 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                     the content, which includes the details of the renamed file.
         """
-        self.__logger.info(msg="Renames a file in a specified drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=filename)
-        self.__logger.info(msg=new_name)
+        self._logger.info(msg="Renames a file in a specified drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=filename)
+        self._logger.info(msg=new_name)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
         # Request headers
         headers = {
             "Authorization": f"Bearer {token}",
@@ -961,16 +961,16 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
+        response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
         print(response.content)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -998,15 +998,15 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code 
                       and content indicating the result of the download operation.
         """
-        self.__logger.info(msg="Downloads a file from a specified remote path in a drive to a local path")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=remote_path)
-        self.__logger.info(msg=local_path)
+        self._logger.info(msg="Downloads a file from a specified remote path in a drive to a local path")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=remote_path)
+        self._logger.info(msg=local_path)
         
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}"}
@@ -1016,15 +1016,15 @@ class SharePoint(object):
         url_query = fr"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
         
         # Request
-        response = self.__session.get(url=url_query, headers=headers, stream=True, verify=True)
+        response = self._session.get(url=url_query, headers=headers, stream=True, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
             
             # Create file
             with open(file=local_path, mode="wb") as file:
@@ -1053,15 +1053,15 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code 
                       and content indicating the result of the upload operation.
         """
-        self.__logger.info(msg="Uploads a file to a specified remote path in a drive")
-        self.__logger.info(msg=drive_id)
-        self.__logger.info(msg=local_path)
-        self.__logger.info(msg=remote_path)
+        self._logger.info(msg="Uploads a file to a specified remote path in a drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=local_path)
+        self._logger.info(msg=remote_path)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -1086,16 +1086,16 @@ class SharePoint(object):
         data = open(file=local_path, mode="rb").read()
 
         # Request
-        response = self.__session.put(url=url_query, headers=headers, params=params, data=data, verify=True)
+        response = self._session.put(url=url_query, headers=headers, params=params, data=data, verify=True)
         print(response.content)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code in (200, 201):
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -1127,13 +1127,13 @@ class SharePoint(object):
                       the content, which includes the list details such as ID, name, display name,
                       description, web URL, created date, and last modified date.
         """
-        self.__logger.info(msg="Retrieves a list of lists for a specified site")
-        self.__logger.info(msg=site_id)
+        self._logger.info(msg="Retrieves a list of lists for a specified site")
+        self._logger.info(msg=site_id)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
         
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -1159,16 +1159,16 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -1201,14 +1201,14 @@ class SharePoint(object):
                       the content, which includes the column details such as ID, name, display name,
                       description, column group, enforce unique values, hidden, indexed, read-only, and required.
         """
-        self.__logger.info(msg="Retrieves the columns from a specified list")
-        self.__logger.info(msg=site_id)
-        self.__logger.info(msg=list_id)
+        self._logger.info(msg="Retrieves the columns from a specified list")
+        self._logger.info(msg=site_id)
+        self._logger.info(msg=list_id)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
         
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -1237,16 +1237,16 @@ class SharePoint(object):
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)  # params=params,
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)  # params=params,
         # print(response.content)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -1280,14 +1280,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the item details such as ID, title, description, etc.
         """
-        self.__logger.info(msg="Retrieves the items from a specified list")
-        self.__logger.info(msg=site_id)
-        self.__logger.info(msg=list_id)
+        self._logger.info(msg="Retrieves the items from a specified list")
+        self._logger.info(msg=site_id)
+        self._logger.info(msg=list_id)
 
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
         
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -1301,16 +1301,16 @@ class SharePoint(object):
         params = {"select": fields, "expand": "fields"}
 
         # Request
-        response = self.__session.get(url=url_query, headers=headers, params=params, verify=True)
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 200:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)
@@ -1340,15 +1340,15 @@ class SharePoint(object):
         Returns:
             Response: An instance of the Response class containing the HTTP status code.
         """
-        self.__logger.info(msg="Deletes a specified item from a list")
-        self.__logger.info(msg=site_id)
-        self.__logger.info(msg=list_id)
-        self.__logger.info(msg=item_id)
+        self._logger.info(msg="Deletes a specified item from a list")
+        self._logger.info(msg=site_id)
+        self._logger.info(msg=list_id)
+        self._logger.info(msg=item_id)
         
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -1359,15 +1359,15 @@ class SharePoint(object):
         url_query = fr"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items/{item_id}"
         
         # Request
-        response = self.__session.delete(url=url_query, headers=headers, verify=True)
+        response = self._session.delete(url=url_query, headers=headers, verify=True)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 204:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
         
         return self.Response(status_code=response.status_code, content=content)
     
@@ -1396,14 +1396,14 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP status code and
                       the content, which includes the details of the added list item.
         """
-        self.__logger.info(msg="Adds a new item to a specified list")
-        self.__logger.info(msg=site_id)
-        self.__logger.info(msg=list_id)
+        self._logger.info(msg="Adds a new item to a specified list")
+        self._logger.info(msg=site_id)
+        self._logger.info(msg=list_id)
         
         # Configuration
-        token = self.__configuration.token
-        api_domain = self.__configuration.api_domain
-        api_version = self.__configuration.api_version
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
 
         # Request headers
         headers = {"Authorization": f"Bearer {token}",
@@ -1431,16 +1431,16 @@ class SharePoint(object):
         data = {"fields": item}
         
         # Request
-        response = self.__session.post(url=url_query, headers=headers, json=data, params=params, verify=True)
+        response = self._session.post(url=url_query, headers=headers, json=data, params=params, verify=True)
         print(response.content)
 
         # Log response code
-        self.__logger.info(msg=f"HTTP Status Code {response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Output
         content = None
         if response.status_code == 201:
-            self.__logger.info(msg="Request successful")
+            self._logger.info(msg="Request successful")
 
             # Export response to json file
             self._export_to_json(content=response.content, save_as=save_as)

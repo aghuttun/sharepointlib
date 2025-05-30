@@ -45,7 +45,7 @@ sharepoint = sharepointlib.SharePoint(client_id=client_id,
 # Gets the site ID for a given site name
 response = sharepoint.get_site_info(name=sp_site_name)
 if response.status_code == 200:
-    df = pd.DataFrame(response.content)
+    df = pd.DataFrame([item.dict() for item in response.content])
     print(df)
 ```
 
@@ -53,7 +53,7 @@ if response.status_code == 200:
 # Gets the hostname and site details for a specified site ID
 response = sharepoint.get_hostname_info(site_id=sp_site_id)
 if response.status_code == 200:
-    df = pd.DataFrame(response.content)
+    df = pd.DataFrame([item.dict() for item in response.content])
     print(df)
 ```
 
@@ -63,7 +63,7 @@ Drives:
 # Gets a list of the Drive IDs for a given site ID
 response = sharepoint.list_drives(site_id=sp_site_id)
 if response.status_code == 200:
-    df = pd.DataFrame(response.content)
+    df = pd.DataFrame([item.dict() for item in response.content])
     print(df)
 ```
 
@@ -72,7 +72,7 @@ if response.status_code == 200:
 response = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
                                    path="Sellout/Support")
 if response.status_code == 200:
-    df = pd.DataFrame(response.content)
+    df = pd.DataFrame([item.dict() for item in response.content])
     print(df)
 ```
 
@@ -81,7 +81,7 @@ if response.status_code == 200:
 response = sharepoint.list_dir(drive_id=sp_site_drive_id, 
                                path="Sellout/Support")
 if response.status_code == 200:
-    df = pd.DataFrame(response.content)
+    df = pd.DataFrame([item.dict() for item in response.content])
     print(df)
 ```
 
@@ -91,14 +91,14 @@ response = sharepoint.create_dir(drive_id=sp_site_drive_id,
                                  path="Sellout/Support",
                                  name="Archive")
 if response.status_code in (200, 201):
-    df = pd.DataFrame(response.content)
+    df = pd.DataFrame([item.dict() for item in response.content])
     print(df)
 
 response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
                                  path="Sellout/Support",
                                  name="Test")
 if response.status_code in (200, 201):
-    df = pd.DataFrame(response.content)
+    df = pd.DataFrame([item.dict() for item in response.content])
     print(df)
 ```
 
