@@ -73,7 +73,7 @@ if response.status_code == 200:
 response = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
                                    path="Sellout/Support")
 if response.status_code == 200:
-    df = pd.DataFrame([item.dict() for item in response.content])
+    df = pd.DataFrame([response.content.dict()])
     print(df)
 ```
 
