@@ -639,6 +639,74 @@ class SharePoint(object):
         
         return self.Response(status_code=response.status_code, content=content)
     
+    def rename_folder(self, drive_id: str, path: str, new_name: str, save_as: str | None = None) -> Response:
+        """
+        Renames a folder in a specified drive ID.
+        This method sends a PATCH request to the Microsoft Graph API to rename a folder.
+
+        Args:
+            drive_id (str): The ID of the drive containing the folder to be renamed.
+            path (str): The full path of the folder to be renamed.
+            new_name (str): The new name for the folder.
+            save_as (str, optional): The file path where the response will be saved in JSON format.
+
+        Returns:
+            Response: A Response dataclass instance with the status code and content.
+        """
+        self._logger.info(msg="Renames a folder in a specified drive")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=path)
+        self._logger.info(msg=new_name)
+
+        # Configuration
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
+
+        # Request headers
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+        # Request query
+        path_quote = quote(string=path)
+        url_query = fr"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
+
+        # Request body
+        data = {"name": new_name}
+
+        # Pydantic output data structure
+        class DataStructure(BaseModel):
+            id: str = Field(alias="id")
+            name: str = Field(alias="name")
+            web_url: str = Field(None, alias="webUrl")
+            created_date_time: datetime = Field(alias="createdDateTime")
+            last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
+
+        alias_list = [field.alias for field in DataStructure.__fields__.values() if field.field_info.alias is not None]
+        params = {"$select": ",".join(alias_list)}
+
+        # Request
+        response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
+
+        # Log response code
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
+
+        # Output
+        content = None
+        if response.status_code == 200:
+            self._logger.info(msg="Request successful")
+
+            # Export response to json file
+            self._export_to_json(content=response.content, save_as=save_as)
+            
+            # Deserialize json (scalar values)
+            content = self._handle_response(response=response, model=DataStructure, rtype="scalar")
+
+        return self.Response(status_code=response.status_code, content=content)
+
     def get_file_info(self, drive_id: str, filename: str, save_as: str | None = None) -> Response:
         """
         Retrieves information about a specific file in a drive ID.

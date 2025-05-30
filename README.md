@@ -111,6 +111,16 @@ if response.status_code in (200, 204):
 ```
 
 ```python
+# Renames a folder in a specified drive ID
+response = sharepoint.rename_folder(drive_id=sp_site_drive_id, 
+                                    path="Sellout/Support",
+                                    new_name="Old")
+if response.status_code == 200:
+    df = pd.DataFrame([response.content.dict()])
+    print(df)
+```
+
+```python
 # Retrieves information about a specific file in a drive ID
 response = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
                                     filename="Sellout/Support/Sellout.xlsx")
