@@ -45,7 +45,8 @@ sharepoint = sharepointlib.SharePoint(client_id=client_id,
 # Gets the site ID for a given site name
 response = sharepoint.get_site_info(name=sp_site_name)
 if response.status_code == 200:
-    df = pd.DataFrame([item.dict() for item in response.content])
+    print(response.content.id)
+    df = pd.DataFrame([response.content.dict()])
     print(df)
 ```
 
@@ -53,7 +54,7 @@ if response.status_code == 200:
 # Gets the hostname and site details for a specified site ID
 response = sharepoint.get_hostname_info(site_id=sp_site_id)
 if response.status_code == 200:
-    df = pd.DataFrame([item.dict() for item in response.content])
+    df = pd.DataFrame([response.content.dict()])
     print(df)
 ```
 
