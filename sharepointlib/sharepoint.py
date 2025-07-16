@@ -484,12 +484,28 @@ class SharePoint(object):
             folder: dict = Field(None, alias="folder")
             created_date_time: datetime = Field(alias="createdDateTime")
             last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
+            last_modified_by: dict = Field(None, alias="lastModifiedBy")
+            last_modified_by_email: str | None = None
 
             @validator("extension", always=True)
             def set_extension(cls, v, values):
                 if values.get("folder") is None:
                     return values["name"].split(".")[-1] if "." in values["name"] else None
                 return None
+            
+            @validator("last_modified_by_email", pre=True, always=True)
+            def set_last_modified_by_email(cls, v, values):
+                # Handle cases where lastModifiedBy or user.email is missing
+                last_modified_by = values.get("last_modified_by")
+                if last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]:
+                    return last_modified_by["user"]["email"]
+                return None
+            
+            # Exclude last_modified_by from dict() method
+            def dict(self, *args, **kwargs):
+                # Override dict() to exclude last_modified_by from output
+                kwargs.setdefault("exclude", {"last_modified_by"})
+                return super().dict(*args, **kwargs)
 
         # Query parameters
         # Pydantic v1
@@ -753,6 +769,22 @@ class SharePoint(object):
             size: int = Field(None, alias="size")
             created_date_time: datetime = Field(alias="createdDateTime")
             last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
+            last_modified_by: dict = Field(None, alias="lastModifiedBy")
+            last_modified_by_email: str | None = None
+
+            @validator("last_modified_by_email", pre=True, always=True)
+            def set_last_modified_by_email(cls, v, values):
+                # Handle cases where lastModifiedBy or user.email is missing
+                last_modified_by = values.get("last_modified_by")
+                if last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]:
+                    return last_modified_by["user"]["email"]
+                return None
+            
+            # Exclude last_modified_by from dict() method
+            def dict(self, *args, **kwargs):
+                # Override dict() to exclude last_modified_by from output
+                kwargs.setdefault("exclude", {"last_modified_by"})
+                return super().dict(*args, **kwargs)
 
         # Query parameters
         # Pydantic v1
@@ -761,6 +793,7 @@ class SharePoint(object):
 
         # Request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
+        # print(response.content)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
