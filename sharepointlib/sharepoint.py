@@ -55,8 +55,8 @@ class SharePoint(object):
         # Init logging
         self._logger = logging.getLogger(name=__name__)
         self._logger.setLevel(level=logging.INFO)
-        handler = logging.StreamHandler()
-        self._logger.addHandler(handler)
+        # handler = logging.StreamHandler()
+        # self._logger.addHandler(handler)
 
         # Init variables
         self._session: requests.Session = requests.Session()
