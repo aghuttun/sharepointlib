@@ -181,6 +181,19 @@ if response.status_code == 200:
 ```
 
 ```python
+# Downloads an Excel file from SharePoint directly into memory and loads it into a Pandas DataFrame
+from io import BytesIO
+
+response = sharepoint.download_file_to_memory(drive_id=sp_site_drive_id,
+                                              remote_path="Sellout/Support/Sellout.xlsx")
+
+if response.status_code == 200 and response.content is not None:
+    excel_data = BytesIO(response.content)
+    df = pd.read_excel(excel_data)
+    print(df)
+```
+
+```python
 # Uploads a file to a specified remote path in a SharePoint drive ID
 response = sharepoint.upload_file(drive_id=sp_site_drive_id, 
                                   local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",

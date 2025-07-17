@@ -1134,6 +1134,56 @@ class SharePoint(object):
         
         return self.Response(status_code=response.status_code, content=content)
     
+    def download_file_to_memory(self, drive_id: str, remote_path: str) -> Response:
+        """
+        Downloads a file from a specified remote path in a drive ID to a variable (memory).
+
+        Note that large files will require a significant amount of memory!
+
+        This method sends a request to the Microsoft Graph API to download a file located at the 
+        specified remote path within the given drive ID. The file content is stored in a variable
+        and returned as part of the Response object. If the request is successful, it will return 
+        the HTTP status code and the file content.
+
+        Args:
+            drive_id (str): The ID of the drive containing the file.
+            remote_path (str): The path of the file in the SharePoint drive, including the filename.
+
+        Returns:
+            Response: An instance of the Response class containing the HTTP status code 
+                    and the content, which includes the file data as bytes.
+        """
+        self._logger.info(msg="Downloads a file from a specified remote path in a drive to a variable")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=remote_path)
+        
+        # Configuration
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
+
+        # Request headers
+        headers = {"Authorization": f"Bearer {token}"}
+        
+        # Request query
+        remote_path_quote = quote(string=remote_path)
+        url_query = fr"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
+        
+        # Request
+        response = self._session.get(url=url_query, headers=headers, stream=True, verify=True)
+        # print(response.content)
+
+        # Log response code
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
+
+        # Output
+        content = None
+        if response.status_code == 200:
+            self._logger.info(msg="Request successful")
+            content = b"".join(response.iter_content(chunk_size=1024))
+        
+        return self.Response(status_code=response.status_code, content=content)
+    
     def upload_file(self, drive_id: str, local_path: str, remote_path: str, save_as: str | None = None) -> Response:
         """
         Uploads a file to a specified remote path in a SharePoint drive ID.
