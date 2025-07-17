@@ -1181,6 +1181,8 @@ class SharePoint(object):
         if response.status_code == 200:
             self._logger.info(msg="Request successful")
             content = b"".join(response.iter_content(chunk_size=1024))
+            file_size = len(content)
+            self._logger.info(msg=f"{file_size} bytes downloaded")
         
         return self.Response(status_code=response.status_code, content=content)
     
