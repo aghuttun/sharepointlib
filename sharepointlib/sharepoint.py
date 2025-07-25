@@ -27,6 +27,7 @@ from urllib.parse import quote
 # Creates a logger for this module
 logger = logging.getLogger(__name__)
 
+
 class SharePoint(object):
     @dataclasses.dataclass
     class Configuration(object):
