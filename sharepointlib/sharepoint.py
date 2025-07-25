@@ -24,6 +24,8 @@ import requests
 from typing import Any, Type
 from urllib.parse import quote
 
+# Creates a logger for this module
+logger = logging.getLogger(__name__)
 
 class SharePoint(object):
     @dataclasses.dataclass
@@ -41,7 +43,7 @@ class SharePoint(object):
         status_code: int
         content: Any = None
     
-    def __init__(self, client_id: str, tenant_id: str, client_secret: str, sp_domain: str) -> None:
+    def __init__(self, client_id: str, tenant_id: str, client_secret: str, sp_domain: str, logger: logging.Logger | None = None) -> None:
         """
         Initializes the SharePoint client with the provided credentials and configuration.
 
@@ -51,12 +53,11 @@ class SharePoint(object):
             client_secret (str): The secret key for the Azure client.
             sp_domain (str): The SharePoint domain.
                               Example: "companygroup.sharepoint.com"
+            logger (logging.Logger, optional): Logger instance to use. If None, a default logger is created.
         """
         # Init logging
-        self._logger = logging.getLogger(name=__name__)
-        self._logger.setLevel(level=logging.INFO)
-        # handler = logging.StreamHandler()
-        # self._logger.addHandler(handler)
+        # Use provided logger or create a default one
+        self._logger = logger or logging.getLogger(name=__name__)
 
         # Init variables
         self._session: requests.Session = requests.Session()
