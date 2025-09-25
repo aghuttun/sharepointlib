@@ -45,8 +45,8 @@ sharepoint = sharepointlib.SharePoint(client_id=client_id,
 # Gets the site ID for a given site name
 response = sharepoint.get_site_info(name=sp_site_name)
 if response.status_code == 200:
-    print(response.content.id)
-    df = pd.DataFrame([response.content.dict()])
+    print(response.content["id"])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -54,7 +54,7 @@ if response.status_code == 200:
 # Gets the hostname and site details for a specified site ID
 response = sharepoint.get_hostname_info(site_id=sp_site_id)
 if response.status_code == 200:
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -64,7 +64,7 @@ Drives:
 # Gets a list of the Drive IDs for a given site ID
 response = sharepoint.list_drives(site_id=sp_site_id)
 if response.status_code == 200:
-    df = pd.DataFrame([item.dict() for item in response.content])
+    df = pd.DataFrame(response.content)
     print(df)
 ```
 
@@ -73,7 +73,7 @@ if response.status_code == 200:
 response = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
                                    path="Sellout/Support")
 if response.status_code == 200:
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -82,7 +82,7 @@ if response.status_code == 200:
 response = sharepoint.list_dir(drive_id=sp_site_drive_id, 
                                path="Sellout/Support")
 if response.status_code == 200:
-    df = pd.DataFrame([item.dict() for item in response.content])
+    df = pd.DataFrame(response.content)
     print(df)
 ```
 
@@ -92,14 +92,14 @@ response = sharepoint.create_dir(drive_id=sp_site_drive_id,
                                  path="Sellout/Support",
                                  name="Archive")
 if response.status_code in (200, 201):
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 
 response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
                                  path="Sellout/Support",
                                  name="Test")
 if response.status_code in (200, 201):
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -117,7 +117,7 @@ response = sharepoint.rename_folder(drive_id=sp_site_drive_id,
                                     path="Sellout/Support",
                                     new_name="Old")
 if response.status_code == 200:
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -127,7 +127,7 @@ response = sharepoint.get_file_info(drive_id=sp_site_drive_id,
                                     filename="Sellout/Support/Sellout.xlsx")
 if response.status_code in (200, 202):
     print(response.content.id)
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -146,7 +146,7 @@ response = sharepoint.move_file(drive_id=sp_site_drive_id,
                                 filename="Sellout/Support/Archive/Sellout.xlsx", 
                                 target_path="Sellout")
 if response.status_code == 200:
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -164,7 +164,7 @@ response = sharepoint.rename_file(drive_id=sp_site_drive_id,
                                   filename="Sellout/Support/Archive/Sellout.xlsx", 
                                   new_name="Sellout_New_Name.xlsx")
 if response.status_code == 200:
-    df = pd.DataFrame([response.content.dict()])
+    df = pd.DataFrame([response.content])
     print(df)
 ```
 
@@ -199,7 +199,8 @@ response = sharepoint.upload_file(drive_id=sp_site_drive_id,
                                   local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",
                                   remote_path=r"Sellout/Support/Archive/Sellout.xlsx")
 if response.status_code in (200, 201):
-    print(response.content)
+    df = pd.DataFrame([response.content])
+    print(df)
 ```
 
 ## Installation
