@@ -487,18 +487,26 @@ class SharePoint(object):
             extension: str | None = None
             size: int = Field(None, alias="size")
             web_url: str = Field(None, alias="webUrl")
-            folder: dict = Field(None, alias="folder")
+            # folder: dict = Field(None, alias="folder")
             created_date_time: datetime = Field(alias="createdDateTime")
             last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
             last_modified_by: dict = Field(None, alias="lastModifiedBy")
+            last_modified_by_name: str | None = None
             last_modified_by_email: str | None = None
 
-            @validator("extension", always=True)
-            def set_extension(cls, v, values):
-                if values.get("folder") is None:
-                    return values["name"].split(".")[-1] if "." in values["name"] else None
-                return None
+            # @validator("extension", always=True)
+            # def set_extension(cls, v, values):
+            #     if values.get("folder") is None:
+            #         return values["name"].split(".")[-1] if "." in values["name"] else None
+            #     return None
             
+            @validator("last_modified_by_name", pre=True, always=True)
+            def set_last_modified_by_name(cls, v, values):
+                last_modified_by = values.get("last_modified_by")
+                if last_modified_by and "user" in last_modified_by and "displayName" in last_modified_by["user"]:
+                    return last_modified_by["user"]["displayName"]
+                return None
+
             @validator("last_modified_by_email", pre=True, always=True)
             def set_last_modified_by_email(cls, v, values):
                 # Handle cases where lastModifiedBy or user.email is missing
