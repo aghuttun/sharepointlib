@@ -134,8 +134,9 @@ if response.status_code in (200, 202):
 ```python
 # Copy a file from one folder to another within the same drive ID
 response = sharepoint.copy_file(drive_id=sp_site_drive_id, 
-                                filename="Sellout/Support/Sellout.xlsx",
-                                target_path="Sellout/Support/Archive")
+                                filename="Sellout/Support/Archive/My Book.xlsx",
+                                target_path="Sellout/Support/",
+                                new_name="My Book Copy.xlsx")
 if response.status_code in (200, 202):
     print("File copied successfully")
 ```
@@ -143,8 +144,9 @@ if response.status_code in (200, 202):
 ```python
 # Moves a file from one folder to another within the same drive ID
 response = sharepoint.move_file(drive_id=sp_site_drive_id, 
-                                filename="Sellout/Support/Archive/Sellout.xlsx", 
-                                target_path="Sellout")
+                                filename="Sellout/Support/Book1.xlsx", 
+                                target_path="Sellout/Support/Archive/",
+                                new_name="My Book.xlsx")
 if response.status_code == 200:
     df = pd.DataFrame([response.content])
     print(df)

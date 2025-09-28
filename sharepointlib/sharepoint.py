@@ -825,7 +825,8 @@ class SharePoint(object):
         
         return self.Response(status_code=response.status_code, content=content)
 
-    def copy_file(self, drive_id: str, filename: str, target_path: str) -> Response:
+    def copy_file(self, drive_id: str, filename: str, target_path: str, new_name: str | None = None) -> Response:
+        
         """
         Copy a file from one folder to another within the same drive ID.
 
@@ -834,9 +835,10 @@ class SharePoint(object):
         If the request is successful, it will return the HTTP status code and the details of the moved file.
 
         Args:
-            drive_id (str): The ID of the drive containing the file to be moved.
-            filename (str): The full path of the file to be moved, including the filename.
-            target_path (str): The path of the destination folder where the file will be moved.
+            drive_id (str): The ID of the drive containing the file to be copied.
+            filename (str): The full path of the file to be copied, including the filename.
+            target_path (str): The path of the destination folder where the file will be copied.
+            new_name (str, optional): The new name for the copied file. If not provided, the file keeps its original name.
 
         Returns:
             Response: An instance of the Response class containing the HTTP status code.
@@ -864,6 +866,9 @@ class SharePoint(object):
         data = {"parentReference": {"driveId": drive_id,
                                     "driveType": "documentLibrary",
                                     "path": f"/drives/{drive_id}/root:/{target_path}"}}
+        # Add to the request body if new_name is provided
+        if new_name is not None:
+            data["name"] = new_name
 
         # Request
         response = self._session.post(url=url_query, headers=headers, json=data, verify=True)
@@ -878,7 +883,8 @@ class SharePoint(object):
     
         return self.Response(status_code=response.status_code, content=content)
     
-    def move_file(self, drive_id: str, filename: str, target_path: str, save_as: str | None = None) -> Response:
+    def move_file(self, drive_id: str, filename: str, target_path: str, new_name: str | None = None, save_as: str | None = None) -> Response:
+        
         """
         Moves a file from one folder to another within the same drive ID.
 
@@ -891,6 +897,8 @@ class SharePoint(object):
             drive_id (str): The ID of the drive containing the file to be moved.
             filename (str): The full path of the file to be moved, including the filename.
             target_path (str): The path of the destination folder where the file will be moved.
+            new_name (str, optional): The new name for the file after moving. If not provided, the 
+                                      file keeps its original name.
             save_as (str, optional): The file path where the response will be saved in JSON format.
                                       If not provided, the response will not be saved.
 
@@ -918,8 +926,8 @@ class SharePoint(object):
             return self.Response(status_code=dir_info_response.status_code, content=content)
 
         # Do the move
-        file_id = file_info_response.content.id
-        folder_id = dir_info_response.content.id
+        file_id = file_info_response.content["id"]
+        folder_id = dir_info_response.content["id"]
 
         # Configuration
         token = self._configuration.token
@@ -936,6 +944,9 @@ class SharePoint(object):
 
         # Request body
         data = {"parentReference": {"id": folder_id}}
+        # Add to the request body if new_name is provided
+        if new_name is not None:
+            data["name"] = new_name
 
         # Pydantic output data structure
         class DataStructure(BaseModel):
