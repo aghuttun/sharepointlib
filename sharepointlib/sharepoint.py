@@ -487,18 +487,18 @@ class SharePoint(object):
             extension: str | None = None
             size: int = Field(None, alias="size")
             web_url: str = Field(None, alias="webUrl")
-            # folder: dict = Field(None, alias="folder")
+            folder: dict = Field(None, alias="folder")
             created_date_time: datetime = Field(alias="createdDateTime")
             last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
             last_modified_by: dict = Field(None, alias="lastModifiedBy")
             last_modified_by_name: str | None = None
             last_modified_by_email: str | None = None
 
-            # @validator("extension", always=True)
-            # def set_extension(cls, v, values):
-            #     if values.get("folder") is None:
-            #         return values["name"].split(".")[-1] if "." in values["name"] else None
-            #     return None
+            @validator("extension", always=True)
+            def set_extension(cls, v, values):
+                if values.get("folder") is None:
+                    return values["name"].split(".")[-1] if "." in values["name"] else None
+                return None
             
             @validator("last_modified_by_name", pre=True, always=True)
             def set_last_modified_by_name(cls, v, values):
@@ -518,7 +518,7 @@ class SharePoint(object):
             # Exclude last_modified_by from dict() method
             def dict(self, *args, **kwargs):
                 # Override dict() to exclude last_modified_by from output
-                kwargs.setdefault("exclude", {"last_modified_by"})
+                kwargs.setdefault("exclude", {"folder", "last_modified_by"})
                 return super().dict(*args, **kwargs)
 
         # Query parameters
