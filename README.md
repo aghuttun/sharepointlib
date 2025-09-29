@@ -183,6 +183,19 @@ if response.status_code == 200:
 ```
 
 ```python
+# Downloads all files from a specified remote path in a drive ID to a local path
+# Examples for local_path (databricks):
+#   local_path=r"/Workspace/Users/admin@admin.com/"
+#   local_path=r"/Volumes/lakehouse/sadp/"
+response = sharepoint.download_all_files(drive_id=sp_site_drive_id,
+                                         remote_path=r"Sellout/Support",
+                                         local_path=r"C:\Users\admin\Downloads")
+if response.status_code == 200:
+    df = pd.DataFrame(response.content)
+    display(df)  # print(df)
+```
+
+```python
 # Downloads an Excel file from SharePoint directly into memory and loads it into a Pandas DataFrame
 from io import BytesIO
 

@@ -1059,11 +1059,9 @@ class SharePoint(object):
         api_domain = self._configuration.api_domain
         api_version = self._configuration.api_version
         # Request headers
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {token}",
+                   "Content-Type": "application/json",
+                   "Accept": "application/json"}
 
         # Request query
         filename_quote = quote(string=filename)
@@ -1211,6 +1209,65 @@ class SharePoint(object):
         
         return self.Response(status_code=response.status_code, content=content)
     
+    def download_all_files(self, drive_id: str, remote_path: str, local_path: str) -> Response:   
+        """
+        Downloads all files from a specified folder in a SharePoint drive to a local folder.
+
+        Args:
+            drive_id (str): The ID of the SharePoint drive.
+            remote_path (str): The path of the folder in SharePoint.
+            local_path (str): The local folder path where files will be saved.
+
+        Returns:
+            Response: A Response object containing the status code and a DataFrame with download results.
+        """
+        self._logger.info(msg="Downloading all files from folder")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=remote_path)
+        self._logger.info(msg=local_path)
+
+        # List all items in the folder
+        response = self.list_dir(drive_id=drive_id, path=remote_path)
+        if response.status_code != 200:
+            self._logger.error(msg="Failed to list folder contents")
+            return self.Response(status_code=response.status_code, content=None)
+        
+        # Output
+        items = response.content
+        content = []
+        if response.status_code == 200:
+            for item in items: 
+                # Only files with extension
+                if item.get("extension") is None:
+                    continue
+
+                filename = item.get("name")
+                self._logger.info(msg=f"File {filename}")
+
+                # Download file
+                sub_response = self.download_file(drive_id=drive_id, 
+                                                  remote_path=fr"{remote_path}/{filename}",
+                                                  local_path=fr"{local_path}/{filename}")
+                
+                # Status
+                status = "pass" if sub_response.status_code == 200 else "fail"
+                if status == "pass":
+                    self._logger.info(msg="File downloaded successfully")
+                else:
+                    self._logger.warning(msg=f"Failed to download {filename}")
+
+                content.append({"id": item.get("id"),
+                                "name": filename,
+                                "extension": item.get("extension"),
+                                "size": item.get("size"),
+                                "created_date_time": item.get("created_date_time"),
+                                "last_modified_date_time": item.get("last_modified_date_time"),
+                                "last_modified_by_name": item.get("last_modified_by_name"),
+                                "last_modified_by_email": item.get("last_modified_by_email"),
+                                "status": status})
+
+        return self.Response(status_code=response.status_code, content=content)
+
     def upload_file(self, drive_id: str, local_path: str, remote_path: str, save_as: str | None = None) -> Response:
         """
         Uploads a file to a specified remote path in a SharePoint drive ID.
