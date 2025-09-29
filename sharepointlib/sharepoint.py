@@ -494,7 +494,7 @@ class SharePoint(object):
             last_modified_by_name: str | None = None
             last_modified_by_email: str | None = None
 
-            @validator("extension", always=True)
+            @validator("extension", pre=True, always=True)
             def set_extension(cls, v, values):
                 if values.get("folder") is None:
                     return values["name"].split(".")[-1] if "." in values["name"] else None
