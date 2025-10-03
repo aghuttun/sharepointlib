@@ -486,6 +486,7 @@ class SharePoint(object):
             name: str = Field(alias="name")
             extension: str | None = None
             size: int = Field(None, alias="size")
+            path: str | None = None
             web_url: str = Field(None, alias="webUrl")
             folder: dict = Field(None, alias="folder")
             created_date_time: datetime = Field(alias="createdDateTime")
@@ -543,6 +544,10 @@ class SharePoint(object):
 
             # Deserialize json (scalar values)
             content = self._handle_response(response=response, model=DataStructure, rtype="list")
+
+            # Add path to each item
+            for item in content:
+                item["path"] = path or "/"
 
         return self.Response(status_code=response.status_code, content=content)
 
@@ -1322,7 +1327,7 @@ class SharePoint(object):
 
         # Request
         response = self._session.put(url=url_query, headers=headers, params=params, data=data, verify=True)
-        print(response.content)
+        # print(response.content)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
