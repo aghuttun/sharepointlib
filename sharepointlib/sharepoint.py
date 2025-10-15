@@ -1,15 +1,7 @@
 """
 This library provides access to some SharePoint functionalities.
-Its features are designed to remain generic and should not be modified to meet the specific needs of individual projects.
-
-Get single base models values:
-Example:
-print(response.content.id)
-
-Convert list of base models to pandas dataframes:
-Example:
-df = pd.DataFrame(response.content)
-display(df)
+Its features are designed to remain generic and should not be modified to meet
+the specific needs of individual projects.
 """
 
 # import base64
@@ -1228,7 +1220,7 @@ class SharePoint(object):
         data = {"parentReference": {"id": folder_id}}
         # Add to the request body if new_name is provided
         if new_name is not None:
-            data["name"] = new_name
+            data["name"] = new_name  # type: ignore
 
         # Pydantic output data structure
         class DataStructure(BaseModel):
@@ -1472,7 +1464,10 @@ class SharePoint(object):
 
         # Request
         response = self._session.get(
-            url=url_query, headers=headers, stream=True, verify=True
+            url=url_query,
+            headers=headers,
+            stream=True,
+            verify=True
         )
 
         # Log response code
@@ -1693,7 +1688,11 @@ class SharePoint(object):
 
         # Request
         response = self._session.put(
-            url=url_query, headers=headers, params=params, data=data, verify=True
+            url=url_query,
+            headers=headers,
+            params=params,
+            data=data,
+            verify=True
         )
         # print(response.content)
 
