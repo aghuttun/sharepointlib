@@ -161,7 +161,9 @@ class SharePoint(object):
                 file.write(content)
 
     def _handle_response(
-        self, response: requests.Response, model: Type[BaseModel], rtype: str = "scalar"
+        self, response: requests.Response,
+        model: Type[BaseModel],
+        rtype: str = "scalar"
     ) -> dict | list[dict]:
         """
         Handles and deserializes the JSON content from an API response.
@@ -460,7 +462,9 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def get_dir_info(
-        self, drive_id: str, path: str | None = None, save_as: str | None = None
+        self,
+        drive_id: str, path: str | None = None,
+        save_as: str | None = None
     ) -> Response:
         """
         Gets the folder ID for a specified folder within a drive ID.
@@ -618,7 +622,7 @@ class SharePoint(object):
             last_modified_by_email: str | None = None
 
             @validator("extension", pre=True, always=True)
-            def set_extension(cls, v, values):
+            def set_extension(cls, v, values):  # noqa: N805
                 """Set file extension if the item is a file."""
                 if values.get("folder") is None:
                     return (
@@ -627,7 +631,7 @@ class SharePoint(object):
                 return None
 
             @validator("last_modified_by_name", pre=True, always=True)
-            def set_last_modified_by_name(cls, v, values):
+            def set_last_modified_by_name(cls, v, values):  # noqa: N805
                 """Get last modified display name."""
                 last_modified_by = values.get("last_modified_by")
                 if (
@@ -639,7 +643,7 @@ class SharePoint(object):
                 return None
 
             @validator("last_modified_by_email", pre=True, always=True)
-            def set_last_modified_by_email(cls, v, values):
+            def set_last_modified_by_email(cls, v, values):  # noqa: N805
                 """Get last modified email."""
                 # Handle cases where lastModifiedBy or user.email is missing
                 last_modified_by = values.get("last_modified_by")
@@ -696,7 +700,10 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def create_dir(
-        self, drive_id: str, path: str, name: str, save_as: str | None = None
+        self,
+        drive_id: str,
+        path: str, name: str,
+        save_as: str | None = None
     ) -> Response:
         """
         Creates a new folder in a specified drive ID.
@@ -845,7 +852,11 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def rename_folder(
-        self, drive_id: str, path: str, new_name: str, save_as: str | None = None
+        self,
+        drive_id: str,
+        path: str,
+        new_name: str,
+        save_as: str | None = None
     ) -> Response:
         """
         Renames a folder in a specified drive ID.
@@ -934,7 +945,10 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def get_file_info(
-        self, drive_id: str, filename: str, save_as: str | None = None
+        self,
+        drive_id: str,
+        filename: str,
+        save_as: str | None = None
     ) -> Response:
         """
         Retrieves information about a specific file in a drive ID.
@@ -1314,7 +1328,11 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def rename_file(
-        self, drive_id: str, filename: str, new_name: str, save_as: str | None = None
+        self,
+        drive_id: str,
+        filename: str,
+        new_name: str,
+        save_as: str | None = None
     ) -> Response:
         """
         Renames a file in a specified drive ID.
@@ -1533,7 +1551,10 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def download_all_files(
-        self, drive_id: str, remote_path: str, local_path: str
+        self,
+        drive_id: str,
+        remote_path: str,
+        local_path: str
     ) -> Response:
         """
         Downloads all files from a specified folder in a SharePoint drive to a
@@ -1878,7 +1899,11 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def list_list_items(
-        self, site_id: str, list_id: str, fields: dict, save_as: str | None = None
+        self,
+        site_id: str,
+        list_id: str,
+        fields: dict,
+        save_as: str | None = None
     ) -> Response:
         """
         Retrieves the items from a specified list in SharePoint.
@@ -2006,7 +2031,11 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     def add_list_item(
-        self, site_id: str, list_id: str, item: dict, save_as: str | None = None
+        self,
+        site_id: str,
+        list_id: str,
+        item: dict,
+        save_as: str | None = None
     ) -> Response:
         """
         Adds a new item to a specified list in SharePoint.
