@@ -14,6 +14,7 @@ from urllib.parse import quote
 
 # TypeAdapter v2 vs parse_obj_as v1
 from pydantic import BaseModel, Field, parse_obj_as, validator
+from models import GetSiteInfo, GetHostNameInfo, ListDrives, GetDirInfo, ListDir, CreateDir, RenameFolder, GetFileInfo, MoveFile, RenameFile, UploadFile, ListLists, ListListColumns, AddListItem
 import requests
 
 # Creates a logger for this module
@@ -44,14 +45,7 @@ class SharePoint(object):
         status_code: int
         content: Any = None
 
-    def __init__(
-        self,
-        client_id: str,
-        tenant_id: str,
-        client_secret: str,
-        sp_domain: str,
-        logger: logging.Logger | None = None,
-    ) -> None:
+    def __init__(self, client_id: str, tenant_id: str, client_secret: str, sp_domain: str, logger: logging.Logger | None = None) -> None:
         """
         Initializes the SharePoint client with the provided credentials and
         configuration.
@@ -119,18 +113,14 @@ class SharePoint(object):
         }
 
         # Request
-        response = self._session.post(
-            url=url_auth, data=body, headers=headers, verify=True
-        )
+        response = self._session.post(url=url_auth, data=body, headers=headers, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
 
         # Return valid response
         if response.status_code == 200:
-            self._configuration.token = json.loads(response.content.decode("utf-8"))[
-                "access_token"
-            ]
+            self._configuration.token = json.loads(response.content.decode("utf-8"))["access_token"]
 
     def _export_to_json(self, content: bytes, save_as: str | None) -> None:
         """
@@ -232,35 +222,15 @@ class SharePoint(object):
 
         # Request query
         # get_sites_id: url_query = f"https://graph.microsoft.com/v1.0/sites?search='{filter}'"
-        url_query = (
-            rf"https://{api_domain}/{api_version}/sites/{sp_domain}:/sites/{name}"
-        )
-
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            display_name: str = Field(None, alias="displayName")
-            web_url: str = Field(None, alias="webUrl")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
+        url_query = (rf"https://{api_domain}/{api_version}/sites/{sp_domain}:/sites/{name}")
 
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in GetSiteInfo.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -274,9 +244,7 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=GetSiteInfo, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
@@ -302,9 +270,7 @@ class SharePoint(object):
               status code and the content, which includes the hostname, site
               name, and other relevant information.
         """
-        self._logger.info(
-            msg="Gets the hostname and site details for a specified site ID"
-        )
+        self._logger.info(msg="Gets the hostname and site details for a specified site ID")
         self._logger.info(msg=site_id)
 
         # Configuration
@@ -322,33 +288,13 @@ class SharePoint(object):
         # Request query
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}"
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            display_name: str = Field(None, alias="displayName")
-            description: str = Field(None, alias="description")
-            web_url: str = Field(None, alias="webUrl")
-            site_collection: dict = Field(None, alias="siteCollection")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in GetHostNameInfo.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -362,9 +308,7 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=GetHostNameInfo, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
@@ -408,32 +352,13 @@ class SharePoint(object):
         # Request query
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/drives"
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            description: str = Field(None, alias="description")
-            web_url: str = Field(None, alias="webUrl")
-            drive_type: str = Field(None, alias="driveType")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in ListDrives.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -447,17 +372,11 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="list"
-            )
+            content = self._handle_response(response=response, model=ListDrives, rtype="list")
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def get_dir_info(
-        self,
-        drive_id: str, path: str | None = None,
-        save_as: str | None = None
-    ) -> Response:
+    def get_dir_info(self, drive_id: str, path: str | None = None, save_as: str | None = None) -> Response:
         """
         Gets the folder ID for a specified folder within a drive ID.
 
@@ -500,37 +419,16 @@ class SharePoint(object):
 
         # Request query
         path_quote = "///" if path is None else f"/{quote(string=path)}"
-        url_query = (
-            rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:{path_quote}"
-        )
+        url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:{path_quote}"
         # print(url_query)
-
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            web_url: str = Field(None, alias="webUrl")
-            size: int = Field(None, alias="size")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
 
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in GetDirInfo.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -544,15 +442,11 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=GetDirInfo, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def list_dir(
-        self, drive_id: str, path: str | None = None, save_as: str | None = None
-    ) -> Response:
+    def list_dir(self, drive_id: str, path: str | None = None, save_as: str | None = None) -> Response:
         """
         List content (files and folders) of a specific folder.
 
@@ -594,79 +488,13 @@ class SharePoint(object):
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/items/root:/{path_quote}:/children"
         # print(url_query)
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-
-            id: str = Field(alias="id")
-            name: str = Field(alias="name")
-            extension: str | None = None
-            size: int = Field(None, alias="size")
-            path: str | None = None
-            web_url: str = Field(None, alias="webUrl")
-            folder: dict = Field(None, alias="folder")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-            last_modified_by: dict = Field(None, alias="lastModifiedBy")
-            last_modified_by_name: str | None = None
-            last_modified_by_email: str | None = None
-
-            @validator("extension", pre=True, always=True)
-            def set_extension(cls, v, values):  # noqa: N805
-                """Set file extension if the item is a file."""
-                if values.get("folder") is None:
-                    return (
-                        values["name"].split(".")[-1] if "." in values["name"] else None
-                    )
-                return None
-
-            @validator("last_modified_by_name", pre=True, always=True)
-            def set_last_modified_by_name(cls, v, values):  # noqa: N805
-                """Get last modified display name."""
-                last_modified_by = values.get("last_modified_by")
-                if (
-                    last_modified_by
-                    and "user" in last_modified_by
-                    and "displayName" in last_modified_by["user"]
-                ):
-                    return last_modified_by["user"]["displayName"]
-                return None
-
-            @validator("last_modified_by_email", pre=True, always=True)
-            def set_last_modified_by_email(cls, v, values):  # noqa: N805
-                """Get last modified email."""
-                # Handle cases where lastModifiedBy or user.email is missing
-                last_modified_by = values.get("last_modified_by")
-                if (
-                    last_modified_by
-                    and "user" in last_modified_by
-                    and "email" in last_modified_by["user"]
-                ):
-                    return last_modified_by["user"]["email"]
-                return None
-
-            # Exclude last_modified_by from dict() method
-            def dict(self, *args, **kwargs):
-                """Override dict() to exclude last_modified_by from output."""
-                # Override dict() to exclude last_modified_by from output
-                kwargs.setdefault("exclude", {"folder", "last_modified_by"})
-                return super().dict(*args, **kwargs)
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in ListDir.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
@@ -681,9 +509,7 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="list"
-            )
+            content = self._handle_response(response=response, model=ListDir, rtype="list")
 
             # Add path to each item
             for item in content:
@@ -691,12 +517,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def create_dir(
-        self,
-        drive_id: str,
-        path: str, name: str,
-        save_as: str | None = None
-    ) -> Response:
+    def create_dir(self, drive_id: str, path: str, name: str, save_as: str | None = None) -> Response:
         """
         Creates a new folder in a specified drive ID.
 
@@ -740,21 +561,9 @@ class SharePoint(object):
         path_quote = quote(string=path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}:/children"
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            web_url: str = Field(None, alias="webUrl")
-            created_date_time: datetime = Field(alias="createdDateTime")
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in CreateDir.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request body
@@ -766,9 +575,7 @@ class SharePoint(object):
         }
 
         # Request
-        response = self._session.post(
-            url=url_query, headers=headers, params=params, json=data, verify=True
-        )
+        response = self._session.post(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -782,9 +589,7 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=CreateDir, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
@@ -826,9 +631,7 @@ class SharePoint(object):
 
         # Request query
         path_quote = quote(string=path)
-        url_query = (
-            rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
-        )
+        url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
 
         # Request
         response = self._session.delete(url=url_query, headers=headers, verify=True)
@@ -843,15 +646,9 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def rename_folder(
-        self,
-        drive_id: str,
-        path: str,
-        new_name: str,
-        save_as: str | None = None
-    ) -> Response:
+    def rename_folder(self, drive_id: str, path: str, new_name: str, save_as: str | None = None) -> Response:
         """
-        Renames a folder in a specified drive ID.
+        Rename a folder in a specified drive ID.
 
         This method sends a PATCH request to the Microsoft Graph API to rename 
         a folder.
@@ -887,36 +684,16 @@ class SharePoint(object):
 
         # Request query
         path_quote = quote(string=path)
-        url_query = (
-            rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
-        )
+        url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
 
         # Request body
         data = {"name": new_name}
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-
-            id: str = Field(alias="id")
-            name: str = Field(alias="name")
-            web_url: str = Field(None, alias="webUrl")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in RenameFolder.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.patch(
-            url=url_query, headers=headers, params=params, json=data, verify=True
-        )
+        response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -930,20 +707,13 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=RenameFolder, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def get_file_info(
-        self,
-        drive_id: str,
-        filename: str,
-        save_as: str | None = None
-    ) -> Response:
+    def get_file_info(self, drive_id: str, filename: str, save_as: str | None = None) -> Response:
         """
-        Retrieves information about a specific file in a drive ID.
+        Retrieve information about a specific file in a drive ID.
 
         This method sends a request to the Microsoft Graph API to obtain
         details about a file located at the specified path within the given
@@ -985,53 +755,13 @@ class SharePoint(object):
         filename_quote = quote(string=filename)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{filename_quote}"
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(alias="name")
-            web_url: str = Field(None, alias="webUrl")
-            size: int = Field(None, alias="size")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-            last_modified_by: dict = Field(None, alias="lastModifiedBy")
-            last_modified_by_email: str | None = None
-
-            @validator("last_modified_by_email", pre=True, always=True)
-            def set_last_modified_by_email(cls, v, values):
-                """Get last modified email."""
-                # Handle cases where lastModifiedBy or user.email is missing
-                last_modified_by = values.get("last_modified_by")
-                if (
-                    last_modified_by
-                    and "user" in last_modified_by
-                    and "email" in last_modified_by["user"]
-                ):
-                    return last_modified_by["user"]["email"]
-                return None
-
-            # Exclude last_modified_by from dict() method
-            def dict(self, *args, **kwargs):
-                """Override dict() to exclude last_modified_by from output."""
-                # Override dict() to exclude last_modified_by from output
-                kwargs.setdefault("exclude", {"last_modified_by"})
-                return super().dict(*args, **kwargs)
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in GetFileInfo.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
@@ -1046,19 +776,11 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=GetFileInfo, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def copy_file(
-        self,
-        drive_id: str,
-        filename: str,
-        target_path: str,
-        new_name: str | None = None,
-    ) -> Response:
+    def copy_file(self, drive_id: str, filename: str, target_path: str, new_name: str | None = None) -> Response:
         """
         Copy a file from one folder to another within the same drive ID.
 
@@ -1082,9 +804,7 @@ class SharePoint(object):
             Response: An instance of the Response class containing the HTTP
               status code.
         """
-        self._logger.info(
-            msg="Copy a file from one folder to another within the same drive"
-        )
+        self._logger.info(msg="Copy a file from one folder to another within the same drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=target_path)
@@ -1118,9 +838,7 @@ class SharePoint(object):
             data["name"] = new_name  # type: ignore
 
         # Request
-        response = self._session.post(
-            url=url_query, headers=headers, json=data, verify=True
-        )
+        response = self._session.post(url=url_query, headers=headers, json=data, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -1132,16 +850,9 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def move_file(
-        self,
-        drive_id: str,
-        filename: str,
-        target_path: str,
-        new_name: str | None = None,
-        save_as: str | None = None,
-    ) -> Response:
+    def move_file(self, drive_id: str, filename: str, target_path: str, new_name: str | None = None, save_as: str | None = None) -> Response:
         """
-        Moves a file from one folder to another within the same drive ID.
+        Move a file from one folder to another within the same drive ID.
 
         This method sends a request to the Microsoft Graph API to move a file
         from the specified source path to the destination path within the given
@@ -1166,34 +877,24 @@ class SharePoint(object):
               status code and the content, which includes the details of the
               moved file.
         """
-        self._logger.info(
-            msg="Moves a file from one folder to another within the same drive"
-        )
+        self._logger.info(msg="Moves a file from one folder to another within the same drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=target_path)
 
         # Source file: Uses the get_file_info function to obtain the source file_id
-        file_info_response = self.get_file_info(
-            drive_id=drive_id, filename=filename, save_as=None
-        )
+        file_info_response = self.get_file_info(drive_id=drive_id, filename=filename, save_as=None)
 
         if file_info_response.status_code != 200:
             content = None
-            return self.Response(
-                status_code=file_info_response.status_code, content=content
-            )
+            return self.Response(status_code=file_info_response.status_code, content=content)
 
         # Destination folder: Uses the get_dir_info function to obtain the source folder_id
-        dir_info_response = self.get_dir_info(
-            drive_id=drive_id, path=target_path, save_as=None
-        )
+        dir_info_response = self.get_dir_info(drive_id=drive_id, path=target_path, save_as=None)
 
         if dir_info_response.status_code != 200:
             content = None
-            return self.Response(
-                status_code=dir_info_response.status_code, content=content
-            )
+            return self.Response(status_code=dir_info_response.status_code, content=content)
 
         # Do the move
         file_id = file_info_response.content["id"]
@@ -1212,9 +913,7 @@ class SharePoint(object):
         }
 
         # Request query
-        url_query = (
-            rf"https://{api_domain}/{api_version}/drives/{drive_id}/items/{file_id}"
-        )
+        url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/items/{file_id}"
 
         # Request body
         data = {"parentReference": {"id": folder_id}}
@@ -1222,31 +921,13 @@ class SharePoint(object):
         if new_name is not None:
             data["name"] = new_name  # type: ignore
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(alias="name")
-            web_url: str = Field(None, alias="webUrl")
-            size: int = Field(None, alias="size")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in MoveFile.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.patch(
-            url=url_query, headers=headers, params=params, json=data, verify=True
-        )
+        response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -1260,15 +941,13 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=MoveFile, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
     def delete_file(self, drive_id: str, filename: str) -> Response:
         """
-        Deletes a file from a specified drive ID.
+        Delete a file from a specified drive ID.
 
         This method sends a request to the Microsoft Graph API to delete a file
         located at the specified path within the given drive ID. If the request
@@ -1319,15 +998,9 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def rename_file(
-        self,
-        drive_id: str,
-        filename: str,
-        new_name: str,
-        save_as: str | None = None
-    ) -> Response:
+    def rename_file(self, drive_id: str, filename: str, new_name: str, save_as: str | None = None) -> Response:
         """
-        Renames a file in a specified drive ID.
+        Rename a file in a specified drive ID.
 
         This method sends a request to the Microsoft Graph API to rename a file
         located at the specified path within the given drive ID. If the request
@@ -1358,6 +1031,7 @@ class SharePoint(object):
         token = self._configuration.token
         api_domain = self._configuration.api_domain
         api_version = self._configuration.api_version
+
         # Request headers
         headers = {
             "Authorization": f"Bearer {token}",
@@ -1372,32 +1046,13 @@ class SharePoint(object):
         # Request body
         data = {"name": new_name}
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-
-            id: str = Field(alias="id")
-            name: str = Field(alias="name")
-            web_url: str = Field(None, alias="webUrl")
-            size: int = Field(None, alias="size")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in RenameFile.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.patch(
-            url=url_query, headers=headers, params=params, json=data, verify=True
-        )
+        response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
         # print(response.content)
 
         # Log response code
@@ -1412,17 +1067,13 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=RenameFile, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def download_file(
-        self, drive_id: str, remote_path: str, local_path: str
-    ) -> Response:
+    def download_file(self, drive_id: str, remote_path: str, local_path: str) -> Response:
         """
-        Downloads a file from a specified remote path in a drive ID to a local
+        Download a file from a specified remote path in a drive ID to a local
         path.
 
         This method sends a request to the Microsoft Graph API to download a
@@ -1443,9 +1094,7 @@ class SharePoint(object):
               status code and content indicating the result of the download
               operation.
         """
-        self._logger.info(
-            msg="Downloads a file from a specified remote path in a drive to a local path"
-        )
+        self._logger.info(msg="Downloads a file from a specified remote path in a drive to a local path")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=remote_path)
         self._logger.info(msg=local_path)
@@ -1463,12 +1112,7 @@ class SharePoint(object):
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
 
         # Request
-        response = self._session.get(
-            url=url_query,
-            headers=headers,
-            stream=True,
-            verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, stream=True, verify=True)
 
         # Log response code
         self._logger.info(msg=f"HTTP Status Code {response.status_code}")
@@ -1487,11 +1131,9 @@ class SharePoint(object):
 
     def download_file_to_memory(self, drive_id: str, remote_path: str) -> Response:
         """
-        Downloads a file from a specified remote path in a drive ID to a
-        variable (memory).
+        Download a file from a specified remote path in a drive ID to memory.
 
         Note that large files will require a significant amount of memory!
-
         This method sends a request to the Microsoft Graph API to download a
         file located at the specified remote path within the given drive ID.
         The file content is stored in a variable and returned as part of the
@@ -1508,9 +1150,7 @@ class SharePoint(object):
               status code and the content, which includes the file data as
               bytes.
         """
-        self._logger.info(
-            msg="Downloads a file from a specified remote path in a drive to a variable"
-        )
+        self._logger.info(msg="Downloads a file from a specified remote path in a drive to a variable")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=remote_path)
 
@@ -1527,9 +1167,7 @@ class SharePoint(object):
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, stream=True, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, stream=True, verify=True)
         # print(response.content)
 
         # Log response code
@@ -1545,15 +1183,9 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def download_all_files(
-        self,
-        drive_id: str,
-        remote_path: str,
-        local_path: str
-    ) -> Response:
+    def download_all_files(self, drive_id: str, remote_path: str, local_path: str) -> Response:
         """
-        Downloads all files from a specified folder in a SharePoint drive to a
-        local folder.
+        Download all files from a specified folder to a local folder.
 
         Args:
             drive_id (str): The ID of the SharePoint drive.
@@ -1618,15 +1250,9 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def upload_file(
-        self,
-        drive_id: str,
-        local_path: str,
-        remote_path: str,
-        save_as: str | None = None,
-    ) -> Response:
+    def upload_file(self, drive_id: str, local_path: str, remote_path: str, save_as: str | None = None) -> Response:
         """
-        Uploads a file to a specified remote path in a SharePoint drive ID.
+        Upload a file to a specified remote path in a SharePoint drive ID.
 
         This method sends a request to the Microsoft Graph API to upload a file
         from the local path to the specified remote path within the given drive
@@ -1667,33 +1293,16 @@ class SharePoint(object):
         remote_path_quote = quote(string=remote_path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            size: int = Field(None, alias="size")
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in UploadFile.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request body
         data = open(file=local_path, mode="rb").read()
 
         # Request
-        response = self._session.put(
-            url=url_query,
-            headers=headers,
-            params=params,
-            data=data,
-            verify=True
-        )
+        response = self._session.put(url=url_query, headers=headers, params=params, data=data, verify=True)
         # print(response.content)
 
         # Log response code
@@ -1708,16 +1317,14 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=UploadFile, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
     # LISTS
     def list_lists(self, site_id: str, save_as: str | None = None) -> Response:
         """
-        Retrieves a list of SharePoint lists for a specified site.
+        Retrieve a list of SharePoint lists for a specified site.
 
         This method sends a request to the Microsoft Graph API to obtain
         details about the lists within the given site ID. If the request is
@@ -1756,33 +1363,13 @@ class SharePoint(object):
         # Request query
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists"
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            display_name: str = Field(None, alias="displayName")
-            description: str = Field(None, alias="description")
-            web_url: str = Field(None, alias="webUrl")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            last_modified_date_time: datetime = Field(
-                None, alias="lastModifiedDateTime"
-            )
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in ListLists.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
@@ -1797,17 +1384,13 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="list"
-            )
+            content = self._handle_response(response=response, model=ListLists, rtype="list")
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def list_list_columns(
-        self, site_id: str, list_id: str, save_as: str | None = None
-    ) -> Response:
+    def list_list_columns(self, site_id: str, list_id: str, save_as: str | None = None) -> Response:
         """
-        Retrieves the columns from a specified list in SharePoint.
+        Retrieve the columns from a specified list in SharePoint.
 
         This method sends a request to the Microsoft Graph API to retrieve the
         columns associated with the specified list ID within a site. If the
@@ -1850,33 +1433,13 @@ class SharePoint(object):
         # Request query
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/columns"
 
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-            id: str = Field(alias="id")
-            name: str = Field(alias="name")
-            display_name: str = Field(alias="displayName")
-            description: str = Field(alias="description")
-            column_group: str = Field(alias="columnGroup")
-            enforce_unique_values: bool = Field(alias="enforceUniqueValues")
-            hidden: bool = Field(alias="hidden")
-            indexed: bool = Field(alias="indexed")
-            read_only: bool = Field(alias="readOnly")
-            required: bool = Field(alias="required")
-
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in ListListColumns.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )  # params=params,
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
@@ -1891,21 +1454,13 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="list"
-            )
+            content = self._handle_response(response=response, model=ListListColumns, rtype="list")
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def list_list_items(
-        self,
-        site_id: str,
-        list_id: str,
-        fields: dict,
-        save_as: str | None = None
-    ) -> Response:
+    def list_list_items(self, site_id: str, list_id: str, fields: dict, save_as: str | None = None) -> Response:
         """
-        Retrieves the items from a specified list in SharePoint.
+        Retrieve the items from a specified list in SharePoint.
 
         This method sends a request to the Microsoft Graph API to retrieve the
         items associated with the specified list ID within a site. If the
@@ -1946,17 +1501,13 @@ class SharePoint(object):
         }
 
         # Request query
-        url_query = (
-            rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items"
-        )
+        url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items"
 
         # Query parameters
         params = {"select": fields, "expand": "fields"}
 
         # Request
-        response = self._session.get(
-            url=url_query, headers=headers, params=params, verify=True
-        )
+        response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
         # Log response code
@@ -1977,7 +1528,7 @@ class SharePoint(object):
 
     def delete_list_item(self, site_id: str, list_id: str, item_id: str) -> Response:
         """
-        Deletes a specified item from a list in SharePoint.
+        Delete a specified item from a list in SharePoint.
 
         This method sends a request to the Microsoft Graph API to delete the
         item associated with the specified item ID within a list. If the
@@ -2029,20 +1580,14 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def add_list_item(
-        self,
-        site_id: str,
-        list_id: str,
-        item: dict,
-        save_as: str | None = None
-    ) -> Response:
+    def add_list_item(self, site_id: str, list_id: str, item: dict, save_as: str | None = None) -> Response:
         """
-        Adds a new item to a specified list in SharePoint.
+        Add a new item to a specified list in SharePoint.
 
-        This method sends a request to the Microsoft Graph API to add a new item
-        to the specified list ID within a site. If the request is successful,
-        it will return the item details along with the HTTP status code. Optionally,
-        the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to add a new
+        item to the specified list ID within a site. If the request is
+        successful, it will return the item details along with the HTTP status
+        code. Optionally, the response can be saved to a JSON file.
 
         Example: add_list_item(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1",
                                list_id="e11f111b-1111-11a1-1111-11f11d1a11f1",
@@ -2079,27 +1624,11 @@ class SharePoint(object):
         }
 
         # Request query
-        url_query = (
-            rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items"
-        )
-
-        # Pydantic output data structure
-        class DataStructure(BaseModel):
-            """Pydantic data structure for site information."""
-
-            id: str = Field(alias="id")
-            name: str = Field(None, alias="name")
-            web_url: str = Field(None, alias="webUrl")
-            created_date_time: datetime = Field(alias="createdDateTime")
-            # last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
+        url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items"
 
         # Query parameters
         # Pydantic v1
-        alias_list = [
-            field.alias
-            for field in DataStructure.__fields__.values()
-            if field.field_info.alias is not None
-        ]
+        alias_list = [field.alias for field in AddListItem.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
         # Request body
@@ -2107,9 +1636,7 @@ class SharePoint(object):
         data = {"fields": item}
 
         # Request
-        response = self._session.post(
-            url=url_query, headers=headers, json=data, params=params, verify=True
-        )
+        response = self._session.post(url=url_query, headers=headers, json=data, params=params, verify=True)
         # print(response.content)
 
         # Log response code
@@ -2124,9 +1651,7 @@ class SharePoint(object):
             self._export_to_json(content=response.content, save_as=save_as)
 
             # Deserialize json (scalar values)
-            content = self._handle_response(
-                response=response, model=DataStructure, rtype="scalar"
-            )
+            content = self._handle_response(response=response, model=AddListItem, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
