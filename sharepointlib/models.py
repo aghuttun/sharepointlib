@@ -209,3 +209,14 @@ class ListListColumns(BaseModel):
     indexed: bool = Field(alias="indexed")
     read_only: bool = Field(alias="readOnly")
     required: bool = Field(alias="required")
+
+
+# Pydantic output data structure
+class AddListItem(BaseModel):
+    """Pydantic data structure for site information."""
+
+    id: str = Field(alias="id")
+    name: str = Field(None, alias="name")
+    web_url: str = Field(None, alias="webUrl")
+    created_date_time: datetime = Field(alias="createdDateTime")
+    # last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")

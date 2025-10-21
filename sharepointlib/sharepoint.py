@@ -47,8 +47,7 @@ class SharePoint(object):
 
     def __init__(self, client_id: str, tenant_id: str, client_secret: str, sp_domain: str, logger: logging.Logger | None = None) -> None:
         """
-        Initializes the SharePoint client with the provided credentials and
-        configuration.
+        Initialize the SharePoint client.
 
         Args:
             client_id (str): The Azure client ID used for authentication.
@@ -92,6 +91,7 @@ class SharePoint(object):
     def auth(self) -> None:
         """
         Authentication.
+
         This method performs the authentication process to obtain an access
         token using the client credentials flow. The token is stored in the
         Configuration dataclass for subsequent API requests.
@@ -142,13 +142,9 @@ class SharePoint(object):
             with open(file=save_as, mode="wb") as file:
                 file.write(content)
 
-    def _handle_response(
-        self, response: requests.Response,
-        model: Type[BaseModel],
-        rtype: str = "scalar"
-    ) -> dict | list[dict]:
+    def _handle_response(self, response: requests.Response, model: Type[BaseModel], rtype: str = "scalar") -> dict | list[dict]:
         """
-        Handles and deserializes the JSON content from an API response.
+        Handle and deserialize the JSON content from an API response.
 
         This method processes the response from an API request and deserializes
         the JSON content into a Pydantic BaseModel or a list of BaseModel
@@ -186,7 +182,7 @@ class SharePoint(object):
 
     def get_site_info(self, name: str, save_as: str | None = None) -> Response:
         """
-        Gets the site ID for a given site name.
+        Get the site ID for a given site name.
 
         This method sends a request to the Microsoft Graph API to retrieve the
         site ID associated with the specified site name. If the request is
@@ -250,7 +246,7 @@ class SharePoint(object):
 
     def get_hostname_info(self, site_id: str, save_as: str | None = None) -> Response:
         """
-        Gets the hostname and site details for a specified site ID.
+        Get the hostname and site details for a specified site ID.
 
         This method sends a request to the Microsoft Graph API to retrieve the
         hostname, site name, and other relevant details associated with the
@@ -315,7 +311,7 @@ class SharePoint(object):
     # DRIVES
     def list_drives(self, site_id: str, save_as: str | None = None) -> Response:
         """
-        Gets a list of the Drive IDs for a given site ID.
+        Get a list of the Drive IDs for a given site ID.
 
         This method sends a request to the Microsoft Graph API to retrieve the
         Drive IDs associated with the specified site ID. If the request is
@@ -378,7 +374,7 @@ class SharePoint(object):
 
     def get_dir_info(self, drive_id: str, path: str | None = None, save_as: str | None = None) -> Response:
         """
-        Gets the folder ID for a specified folder within a drive ID.
+        Get the folder ID for a specified folder within a drive ID.
 
         This method sends a request to the Microsoft Graph API to retrieve the
         folder ID associated with the specified folder path within the given
@@ -399,9 +395,7 @@ class SharePoint(object):
               status code and the content, which includes the folder ID and
               other relevant information.
         """
-        self._logger.info(
-            msg="Gets the folder ID for a specified folder within a drive"
-        )
+        self._logger.info(msg="Gets the folder ID for a specified folder within a drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -519,7 +513,7 @@ class SharePoint(object):
 
     def create_dir(self, drive_id: str, path: str, name: str, save_as: str | None = None) -> Response:
         """
-        Creates a new folder in a specified drive ID.
+        Create a new folder in a specified drive ID.
 
         This method sends a request to the Microsoft Graph API to create a new
         folder at the specified path within the given drive ID. If the request
@@ -595,7 +589,7 @@ class SharePoint(object):
 
     def delete_dir(self, drive_id: str, path: str) -> Response:
         """
-        Deletes a folder from a specified drive ID.
+        Delete a folder from a specified drive ID.
 
         This method sends a request to the Microsoft Graph API to delete a
         folder located at the specified path within the given drive ID. If the
