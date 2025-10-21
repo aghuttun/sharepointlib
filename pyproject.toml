@@ -29,6 +29,7 @@ dependencies = [
     "requests>=2.0",
     "pydantic~=1.0"
 ]
+
 [project.optional-dependencies]
 dev = [
     "twine",
@@ -38,3 +39,12 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/aghuttun/sharepointlib"
 Documentation = "https://github.com/aghuttun/sharepointlib/blob/main/README.md"
+
+[tool.black]
+line-length = 120
+
+[tool.flake8]
+max-line-length = 120
+
+[tool.isort]
+line_length = 120
