@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, validator
 
 
 class GetSiteInfo(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for get_site_info()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
@@ -18,7 +18,7 @@ class GetSiteInfo(BaseModel):
 
 
 class GetHostNameInfo(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for get_hostname_info()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
@@ -31,7 +31,7 @@ class GetHostNameInfo(BaseModel):
 
 
 class ListDrives(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for list_drives()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
@@ -43,7 +43,7 @@ class ListDrives(BaseModel):
 
 
 class GetDirInfo(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for get_dir_info()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
@@ -54,7 +54,7 @@ class GetDirInfo(BaseModel):
 
 
 class ListDir(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for list_dir()."""
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
@@ -103,7 +103,7 @@ class ListDir(BaseModel):
 
 
 class CreateDir(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for create_dir()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
@@ -112,7 +112,7 @@ class CreateDir(BaseModel):
 
 
 class RenameFolder(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for rename_folder()."""
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
@@ -122,7 +122,7 @@ class RenameFolder(BaseModel):
 
 
 class GetFileInfo(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for get_file_info()."""
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
@@ -155,7 +155,7 @@ class GetFileInfo(BaseModel):
 
 
 class MoveFile(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for move_file()."""
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
@@ -166,7 +166,7 @@ class MoveFile(BaseModel):
 
 
 class RenameFile(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for rename_file()."""
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
@@ -177,7 +177,7 @@ class RenameFile(BaseModel):
 
 
 class UploadFile(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for upload_file()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
@@ -185,7 +185,7 @@ class UploadFile(BaseModel):
 
 
 class ListLists(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for list_lists()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
@@ -197,7 +197,7 @@ class ListLists(BaseModel):
 
 
 class ListListColumns(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for list_list_columns()."""
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
@@ -213,10 +213,12 @@ class ListListColumns(BaseModel):
 
 # Pydantic output data structure
 class AddListItem(BaseModel):
-    """Pydantic data structure for site information."""
+    """Pydantic data structure for add_list_item()."""
 
     id: str = Field(alias="id")
     name: str = Field(None, alias="name")
     web_url: str = Field(None, alias="webUrl")
     created_date_time: datetime = Field(alias="createdDateTime")
     # last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
+
+# eom

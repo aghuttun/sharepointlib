@@ -6,15 +6,15 @@ the specific needs of individual projects.
 
 # import base64
 import dataclasses
-from datetime import datetime
 import json
 import logging
 from typing import Any, Type
 from urllib.parse import quote
+import requests
 
 # TypeAdapter v2 vs parse_obj_as v1
-from pydantic import BaseModel, Field, parse_obj_as, validator
-from models import (
+from pydantic import BaseModel, parse_obj_as  # pylint: disable=no-name-in-module
+from .models import (
     GetSiteInfo,
     GetHostNameInfo,
     ListDrives,
@@ -30,7 +30,6 @@ from models import (
     ListListColumns,
     AddListItem,
 )
-import requests
 
 # Creates a logger for this module
 logger = logging.getLogger(__name__)
@@ -60,7 +59,14 @@ class SharePoint(object):
         status_code: int
         content: Any = None
 
-    def __init__(self, client_id: str, tenant_id: str, client_secret: str, sp_domain: str, logger: logging.Logger | None = None) -> None:
+    def __init__(
+        self,
+        client_id: str,
+        tenant_id: str,
+        client_secret: str,
+        sp_domain: str,
+        custom_logger: logging.Logger | None = None,
+    ) -> None:
         """
         Initialize the SharePoint client.
 
@@ -68,14 +74,12 @@ class SharePoint(object):
             client_id (str): The Azure client ID used for authentication.
             tenant_id (str): The Azure tenant ID associated with the client.
             client_secret (str): The secret key for the Azure client.
-            sp_domain (str): The SharePoint domain.
-                              Example: "companygroup.sharepoint.com"
-            logger (logging.Logger, optional): Logger instance to use.
-              If None, a default logger is created.
+            sp_domain (str): The SharePoint domain. Example: "companygroup.sharepoint.com"
+            custom_logger (logging.Logger, optional): Logger instance to use. If None, a default logger is created.
         """
         # Init logging
         # Use provided logger or create a default one
-        self._logger = logger or logging.getLogger(name=__name__)
+        self._logger = custom_logger or logging.getLogger(name=__name__)
 
         # Init variables
         self._session: requests.Session = requests.Session()
@@ -107,9 +111,8 @@ class SharePoint(object):
         """
         Authentication.
 
-        This method performs the authentication process to obtain an access
-        token using the client credentials flow. The token is stored in the
-        Configuration dataclass for subsequent API requests.
+        This method performs the authentication process to obtain an access token using the client credentials flow.
+        The token is stored in the Configuration dataclass for subsequent API requests.
         """
         self._logger.info(msg="Authentication")
 
@@ -141,42 +144,35 @@ class SharePoint(object):
         """
         Export response content to a JSON file.
 
-        This method takes the content to be exported and saves it to a
-        specified file in JSON format.
-        If the `save_as` parameter is provided, the content will be written to
-        that file.
+        This method takes the content to be exported and saves it to a specified file in JSON format.
+        If the `save_as` parameter is provided, the content will be written to that file.
 
         Args:
-            content (bytes): The content to be exported, typically the response
-              content from an API call.
-            save_as (str): The file path where the JSON content will be saved.
-              If None, the content will not be saved.
+            content (bytes): The content to be exported, typically the response content from an API call.
+            save_as (str): The file path where the JSON content will be saved. If None, the content will not be saved.
         """
         if save_as is not None:
             self._logger.info(msg="Exports response to JSON file.")
             with open(file=save_as, mode="wb") as file:
                 file.write(content)
 
-    def _handle_response(self, response: requests.Response, model: Type[BaseModel], rtype: str = "scalar") -> dict | list[dict]:
+    def _handle_response(
+        self, response: requests.Response, model: Type[BaseModel], rtype: str = "scalar"
+    ) -> dict | list[dict]:
         """
         Handle and deserialize the JSON content from an API response.
 
-        This method processes the response from an API request and deserializes
-        the JSON content into a Pydantic BaseModel or a list of BaseModel
-        instances, depending on the response type.
+        This method processes the response from an API request and deserializes the JSON content into a Pydantic
+        BaseModel or a list of BaseModel instances, depending on the response type.
 
         Args:
-            response (requests.Response): The response object from the API
-              request.
-            model (Type[BaseModel]): The Pydantic BaseModel class to use for
-              deserialization and validation.
-            rtype (str, optional): The type of response to handle.
-              Use "scalar" for a single record and "list" for a list of
-              records. Defaults to "scalar".
+            response (requests.Response): The response object from the API request.
+            model (Type[BaseModel]): The Pydantic BaseModel class to use for deserialization and validation.
+            rtype (str, optional): The type of response to handle. Use "scalar" for a single record and "list" for a
+              list of records. Defaults to "scalar".
 
         Returns:
-            dict or list[dict]: The deserialized content as a dictionary
-              (for scalar) or a list of dictionaries (for list).
+            dict or list[dict]: The deserialized content as a dictionary (scalar) or a list of dictionaries (list).
         """
         if rtype.lower() == "scalar":
             # Deserialize json (scalar values)
@@ -199,21 +195,18 @@ class SharePoint(object):
         """
         Get the site ID for a given site name.
 
-        This method sends a request to the Microsoft Graph API to retrieve the
-        site ID associated with the specified site name. If the request is
-        successful, it will return the site ID along with the HTTP status code.
+        This method sends a request to the Microsoft Graph API to retrieve the site ID associated with the specified
+        site name. If the request is successful, it will return the site ID along with the HTTP status code.
         Optionally, the response can be saved to a JSON file.
 
         Args:
             name (str): The name of the site for which to retrieve the site ID.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the site ID and other
-              relevant information.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the site ID and other relevant information.
         """
         self._logger.info(msg="Gets the site ID for a given site name")
         self._logger.info(msg=name)
@@ -233,7 +226,7 @@ class SharePoint(object):
 
         # Request query
         # get_sites_id: url_query = f"https://graph.microsoft.com/v1.0/sites?search='{filter}'"
-        url_query = (rf"https://{api_domain}/{api_version}/sites/{sp_domain}:/sites/{name}")
+        url_query = rf"https://{api_domain}/{api_version}/sites/{sp_domain}:/sites/{name}"
 
         # Query parameters
         # Pydantic v1
@@ -263,23 +256,18 @@ class SharePoint(object):
         """
         Get the hostname and site details for a specified site ID.
 
-        This method sends a request to the Microsoft Graph API to retrieve the
-        hostname, site name, and other relevant details associated with the
-        specified site ID. If the request is successful, it will return the
-        site information along with the HTTP status code. Optionally, the
-        response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to retrieve the hostname, site name, and other relevant
+        details associated with the specified site ID. If the request is successful, it will return the site information
+        along with the HTTP status code. Optionally, the response can be saved to a JSON file.
 
         Args:
-            site_id (str): The ID of the site for which to retrieve the
-              hostname and details.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            site_id (str): The ID of the site for which to retrieve the hostname and details.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the hostname, site
-              name, and other relevant information.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the hostname, site name, and other relevant information.
         """
         self._logger.info(msg="Gets the hostname and site details for a specified site ID")
         self._logger.info(msg=site_id)
@@ -301,7 +289,9 @@ class SharePoint(object):
 
         # Query parameters
         # Pydantic v1
-        alias_list = [field.alias for field in GetHostNameInfo.__fields__.values() if field.field_info.alias is not None]
+        alias_list = [
+            field.alias for field in GetHostNameInfo.__fields__.values() if field.field_info.alias is not None
+        ]
         params = {"$select": ",".join(alias_list)}
 
         # Request
@@ -328,22 +318,18 @@ class SharePoint(object):
         """
         Get a list of the Drive IDs for a given site ID.
 
-        This method sends a request to the Microsoft Graph API to retrieve the
-        Drive IDs associated with the specified site ID. If the request is
-        successful, it will return the Drive IDs along with the HTTP status
-        code. Optionally, the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to retrieve the Drive IDs associated with the specified
+        site ID. If the request is successful, it will return the Drive IDs along with the HTTP status code. Optionally,
+        the response can be saved to a JSON file.
 
         Args:
-            site_id (str): The ID of the site for which to retrieve the Drive
-              IDs.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            site_id (str): The ID of the site for which to retrieve the Drive IDs.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the list of Drive IDs
-              and other relevant information.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the list of Drive IDs and other relevant information.
         """
         self._logger.info(msg="Gets a list of the Drive IDs for a given site")
         self._logger.info(msg=site_id)
@@ -391,24 +377,20 @@ class SharePoint(object):
         """
         Get the folder ID for a specified folder within a drive ID.
 
-        This method sends a request to the Microsoft Graph API to retrieve the
-        folder ID associated with the specified folder path within the given
-        drive ID. If the request is successful, it will return the folder ID
-        along with the HTTP status code. Optionally, the response can be saved
-        to a JSON file.
+        This method sends a request to the Microsoft Graph API to retrieve the folder ID associated with the specified
+        folder path within the given drive ID. If the request is successful, it will return the folder ID along with the
+        HTTP status code. Optionally, the response can be saved to a JSON file.
 
         Args:
             drive_id (str): The ID of the drive where the folder is located.
-            path (str, optional): The path of the folder for which to retrieve
-              the folder ID. If not provided, the root folder will be used.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            path (str, optional): The path of the folder for which to retrieve the folder ID. If not provided, the root
+              folder will be used.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the folder ID and
-              other relevant information.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the folder ID and other relevant information.
         """
         self._logger.info(msg="Gets the folder ID for a specified folder within a drive")
         self._logger.info(msg=drive_id)
@@ -459,22 +441,19 @@ class SharePoint(object):
         """
         List content (files and folders) of a specific folder.
 
-        This method sends a request to the Microsoft Graph API to retrieve the
-        list of children (files and folders) within a specified folder in a
-        drive. If the request is successful, it will return the HTTP status
-        code and a list of the children.
+        This method sends a request to the Microsoft Graph API to retrieve the list of children (files and folders)
+        within a specified folder in a drive. If the request is successful, it will return the HTTP status code and a
+        list of the children.
 
         Args:
             drive_id (str): The ID of the drive containing the folder.
-            path (str, optional): The path of the folder for which to list the
-              children. If not provided, the root folder will be used.
-            save_as (str, optional): If provided, the results will be saved to
-              a JSON file at the specified path.
+            path (str, optional): The path of the folder for which to list the children. If not provided, the root
+              folder will be used.
+            save_as (str, optional): If provided, the results will be saved to a JSON file at the specified path.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and a list of children (files and folders) within
-              the specified folder.
+            Response: An instance of the Response class containing the HTTP status code and a list of children
+              (files and folders) within the specified folder.
         """
         self._logger.info(msg="List content (files and folders) of a folder")
         self._logger.info(msg=drive_id)
@@ -530,25 +509,20 @@ class SharePoint(object):
         """
         Create a new folder in a specified drive ID.
 
-        This method sends a request to the Microsoft Graph API to create a new
-        folder at the specified path within the given drive ID. If the request
-        is successful, it will return the HTTP status code and the details of
-        the created folder. Optionally, the response can be saved to a JSON
-        file.
+        This method sends a request to the Microsoft Graph API to create a new folder at the specified path within the
+        given drive ID. If the request is successful, it will return the HTTP status code and the details of the created
+        folder. Optionally, the response can be saved to a JSON file.
 
         Args:
-            drive_id (str): The ID of the drive where the folder will be
-              created.
+            drive_id (str): The ID of the drive where the folder will be created.
             path (str): The path of the new folder to be created.
             name (str): The name of the new folder to be created.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the details of the
-              created folder.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the details of the created folder.
         """
         self._logger.info(msg="Creates a new folder in a specified drive")
         self._logger.info(msg=drive_id)
@@ -606,21 +580,17 @@ class SharePoint(object):
         """
         Delete a folder from a specified drive ID.
 
-        This method sends a request to the Microsoft Graph API to delete a
-        folder located at the specified path within the given drive ID. If the
-        request is successful, it will return the HTTP status code and the
-        details of the deleted folder. Optionally, the response can be saved
-        to a JSON file.
+        This method sends a request to the Microsoft Graph API to delete a folder located at the specified path within
+        the given drive ID. If the request is successful, it will return the HTTP status code and the details of the
+        deleted folder. Optionally, the response can be saved to a JSON file.
 
         Args:
-            drive_id (str): The ID of the drive containing the folder to be
-              deleted.
+            drive_id (str): The ID of the drive containing the folder to be deleted.
             path (str): The full path of the folder to be deleted.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the details of the
-              deleted folder.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the details of the deleted folder.
         """
         self._logger.info(msg="Deletes a folder from a specified drive")
         self._logger.info(msg=drive_id)
@@ -659,20 +629,16 @@ class SharePoint(object):
         """
         Rename a folder in a specified drive ID.
 
-        This method sends a PATCH request to the Microsoft Graph API to rename 
-        a folder.
+        This method sends a PATCH request to the Microsoft Graph API to rename a folder.
 
         Args:
-            drive_id (str): The ID of the drive containing the folder to be
-              renamed.
+            drive_id (str): The ID of the drive containing the folder to be renamed.
             path (str): The full path of the folder to be renamed.
             new_name (str): The new name for the folder.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format.
+            save_as (str, optional): The file path where the response will be saved in JSON format.
 
         Returns:
-            Response: A Response dataclass instance with the status code and
-              content.
+            Response: A Response dataclass instance with the status code and content.
         """
         self._logger.info(msg="Renames a folder in a specified drive")
         self._logger.info(msg=drive_id)
@@ -724,25 +690,19 @@ class SharePoint(object):
         """
         Retrieve information about a specific file in a drive ID.
 
-        This method sends a request to the Microsoft Graph API to obtain
-        details about a file located at the specified path within the given
-        drive ID. If the request is successful, it will return the file
-        information along with the HTTP status code. Optionally, the
-        response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to obtain details about a file located at the specified
+        path within the given drive ID. If the request is successful, it will return the file information along with the
+        HTTP status code. Optionally, the response can be saved to a JSON file.
 
         Args:
             drive_id (str): The ID of the drive containing the file.
-            filename (str): The full path of the file for which to retrieve
-              information, including the filename.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            filename (str): The full path of the file for which to retrieve information, including the filename.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the file details
-              such as ID, name, web URL, size, created date, and last modified
-              date.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the file details such as ID, name, web URL, size, created date, and last modified date.
         """
         self._logger.info(msg="Retrieves information about a specific file")
         self._logger.info(msg=drive_id)
@@ -793,25 +753,19 @@ class SharePoint(object):
         """
         Copy a file from one folder to another within the same drive ID.
 
-        This method sends a request to the Microsoft Graph API to copy a file
-        from the specified source path to the destination path within the given
-        drive ID. It works only on the same drive. If the request is
-        successful, it will return the HTTP status code and the details of the
-        moved file.
+        This method sends a request to the Microsoft Graph API to copy a file from the specified source path to the
+        destination path within the given drive ID. It works only on the same drive. If the request is successful, it
+        will return the HTTP status code and the details of the moved file.
 
         Args:
-            drive_id (str): The ID of the drive containing the file to be
-              copied.
-            filename (str): The full path of the file to be copied, including
-              the filename.
-            target_path (str): The path of the destination folder where the
-              file will be copied.
-            new_name (str, optional): The new name for the copied file. If not
-              provided, the file keeps its original name.
+            drive_id (str): The ID of the drive containing the file to be copied.
+            filename (str): The full path of the file to be copied, including the filename.
+            target_path (str): The path of the destination folder where the file will be copied.
+            new_name (str, optional): The new name for the copied file. If not provided, the file keeps its original
+              name.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code.
+            Response: An instance of the Response class containing the HTTP status code.
         """
         self._logger.info(msg="Copy a file from one folder to another within the same drive")
         self._logger.info(msg=drive_id)
@@ -859,32 +813,29 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def move_file(self, drive_id: str, filename: str, target_path: str, new_name: str | None = None, save_as: str | None = None) -> Response:
+    def move_file(
+        self, drive_id: str, filename: str, target_path: str, new_name: str | None = None, save_as: str | None = None
+    ) -> Response:
         """
         Move a file from one folder to another within the same drive ID.
 
-        This method sends a request to the Microsoft Graph API to move a file
-        from the specified source path to the destination path within the given
-        drive ID. It works only on the same drive. If the request is
-        successful, it will return the HTTP status code and the details of the
-        moved file. Optionally, the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to move a file from the specified source path to the
+        destination path within the given drive ID. It works only on the same drive. If the request is successful, it
+        will return the HTTP status code and the details of the moved file. Optionally, the response can be saved to a
+        JSON file.
 
         Args:
             drive_id (str): The ID of the drive containing the file to be moved.
-            filename (str): The full path of the file to be moved, including
-              the filename.
-            target_path (str): The path of the destination folder where the
-              file will be moved.
-            new_name (str, optional): The new name for the file after moving.
-              If not provided, the file keeps its original name.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            filename (str): The full path of the file to be moved, including the filename.
+            target_path (str): The path of the destination folder where the file will be moved.
+            new_name (str, optional): The new name for the file after moving. If not provided, the file keeps its
+              original name.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the details of the
-              moved file.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the details of the moved file.
         """
         self._logger.info(msg="Moves a file from one folder to another within the same drive")
         self._logger.info(msg=drive_id)
@@ -958,21 +909,17 @@ class SharePoint(object):
         """
         Delete a file from a specified drive ID.
 
-        This method sends a request to the Microsoft Graph API to delete a file
-        located at the specified path within the given drive ID. If the request
-        is successful, it will return the HTTP status code and the details of
-        the deleted file. Optionally, the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to delete a file located at the specified path within
+        the given drive ID. If the request is successful, it will return the HTTP status code and the details of the
+        deleted file. Optionally, the response can be saved to a JSON file.
 
         Args:
-            drive_id (str): The ID of the drive containing the file to be
-              deleted.
-            filename (str): The full path of the file to be deleted, including
-              the filename.
+            drive_id (str): The ID of the drive containing the file to be deleted.
+            filename (str): The full path of the file to be deleted, including the filename.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the details of the
-              deleted file.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the details of the deleted file.
         """
         self._logger.info(msg="Deletes a file from a specified drive")
         self._logger.info(msg=drive_id)
@@ -1011,25 +958,20 @@ class SharePoint(object):
         """
         Rename a file in a specified drive ID.
 
-        This method sends a request to the Microsoft Graph API to rename a file
-        located at the specified path within the given drive ID. If the request
-        is successful, it will return the HTTP status code and the details of
-        the renamed file. Optionally, the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to rename a file located at the specified path within the
+        given drive ID. If the request is successful, it will return the HTTP status code and the details of the renamed
+        file. Optionally, the response can be saved to a JSON file.
 
         Args:
-            drive_id (str): The ID of the drive containing the file to be
-              renamed.
-            filename (str): The full path of the file to be renamed, including
-              the filename.
+            drive_id (str): The ID of the drive containing the file to be renamed.
+            filename (str): The full path of the file to be renamed, including the filename.
             new_name (str): The new name for the file.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the details of the
-              renamed file.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the details of the renamed file.
         """
         self._logger.info(msg="Renames a file in a specified drive")
         self._logger.info(msg=drive_id)
@@ -1082,26 +1024,21 @@ class SharePoint(object):
 
     def download_file(self, drive_id: str, remote_path: str, local_path: str) -> Response:
         """
-        Download a file from a specified remote path in a drive ID to a local
-        path.
+        Download a file from a specified remote path in a drive ID to a local path.
 
-        This method sends a request to the Microsoft Graph API to download a
-        file located at the specified remote path within the given drive ID.
-        The file will be saved to the specified local path on the machine
-        running the code. If the request is successful, it will return the
-        HTTP status code and a response indicating the result of the operation.
+        This method sends a request to the Microsoft Graph API to download a file located at the specified remote path
+        within the given drive ID. The file will be saved to the specified local path on the machine running the code.
+        If the request is successful, it will return the HTTP status code and a response indicating the result of the
+        operation.
 
         Args:
             drive_id (str): The ID of the drive containing the file.
-            remote_path (str): The path of the file in the SharePoint drive,
-              including the filename.
-            local_path (str): The local file path where the downloaded file
-              will be saved.
+            remote_path (str): The path of the file in the SharePoint drive, including the filename.
+            local_path (str): The local file path where the downloaded file will be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and content indicating the result of the download
-              operation.
+            Response: An instance of the Response class containing the HTTP status code and content indicating the
+              result of the download operation.
         """
         self._logger.info(msg="Downloads a file from a specified remote path in a drive to a local path")
         self._logger.info(msg=drive_id)
@@ -1143,21 +1080,17 @@ class SharePoint(object):
         Download a file from a specified remote path in a drive ID to memory.
 
         Note that large files will require a significant amount of memory!
-        This method sends a request to the Microsoft Graph API to download a
-        file located at the specified remote path within the given drive ID.
-        The file content is stored in a variable and returned as part of the
-        Response object. If the request is successful, it will return the HTTP
-        status code and the file content.
+        This method sends a request to the Microsoft Graph API to download a file located at the specified remote path
+        within the given drive ID. The file content is stored in a variable and returned as part of the Response object.
+        If the request is successful, it will return the HTTP status code and the file content.
 
         Args:
             drive_id (str): The ID of the drive containing the file.
-            remote_path (str): The path of the file in the SharePoint drive,
-              including the filename.
+            remote_path (str): The path of the file in the SharePoint drive, including the filename.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the file data as
-              bytes.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the file data as bytes.
         """
         self._logger.info(msg="Downloads a file from a specified remote path in a drive to a variable")
         self._logger.info(msg=drive_id)
@@ -1202,8 +1135,7 @@ class SharePoint(object):
             local_path (str): The local folder path where files will be saved.
 
         Returns:
-            Response: A Response object containing the status code and a list
-            with download results.
+            Response: A Response object containing the status code and a list with download results.
         """
         self._logger.info(msg="Downloading all files from folder")
         self._logger.info(msg=drive_id)
@@ -1263,24 +1195,20 @@ class SharePoint(object):
         """
         Upload a file to a specified remote path in a SharePoint drive ID.
 
-        This method sends a request to the Microsoft Graph API to upload a file
-        from the local path to the specified remote path within the given drive
-        ID. If the folder does not exist in SharePoint, it will be created. If
-        the request is successful, it will return the HTTP status code and a
-        response indicating the result of the operation.
+        This method sends a request to the Microsoft Graph API to upload a file from the local path to the specified
+        remote path within the given drive ID. If the folder does not exist in SharePoint, it will be created. If the
+        request is successful, it will return the HTTP status code and a response indicating the result of the
+        operation.
 
         Args:
             drive_id (str): The ID of the drive where the file will be uploaded.
             local_path (str): The local file path of the file to be uploaded.
-            remote_path (str): The path in the SharePoint drive where the file
-              will be uploaded, including the filename.
-            save_as (str, optional): If provided, the results will be saved to
-              a JSON file at the specified path.
+            remote_path (str): The path in the SharePoint drive where the file will be uploaded, including the filename.
+            save_as (str, optional): If provided, the results will be saved to a JSON file at the specified path.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and content indicating the result of the upload
-              operation.
+            Response: An instance of the Response class containing the HTTP status code and content indicating the
+              result of the upload operation.
         """
         self._logger.info(msg="Uploads a file to a specified remote path in a drive")
         self._logger.info(msg=drive_id)
@@ -1335,24 +1263,21 @@ class SharePoint(object):
         """
         Retrieve a list of SharePoint lists for a specified site.
 
-        This method sends a request to the Microsoft Graph API to obtain
-        details about the lists within the given site ID. If the request is
-        successful, it will return the list information along with the HTTP
-        status code. Optionally, the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to obtain details about the lists within the given site
+        ID. If the request is successful, it will return the list information along with the HTTP status code.
+        Optionally, the response can be saved to a JSON file.
 
-        Example: list_lists(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1")
+        Example: list_lists(site_id="companygroup.sharepoint.com,1111a11e-...,...-ed11bff1baf1")
 
         Args:
             site_id (str): The ID of the site containing the lists.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the list details
-              such as ID, name, display name, description, web URL,
-              created date, and last modified date.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the list details such as ID, name, display name, description, web URL, created date, and last modified
+              date.
         """
         self._logger.info(msg="Retrieves a list of lists for a specified site")
         self._logger.info(msg=site_id)
@@ -1401,27 +1326,23 @@ class SharePoint(object):
         """
         Retrieve the columns from a specified list in SharePoint.
 
-        This method sends a request to the Microsoft Graph API to retrieve the
-        columns associated with the specified list ID within a site. If the
-        request is successful, it will return the column details along with
-        the HTTP status code. Optionally, the response can be saved to a JSON
-        file.
+        This method sends a request to the Microsoft Graph API to retrieve the columns associated with the specified
+        list ID within a site. If the request is successful, it will return the column details along with the HTTP
+        status code. Optionally, the response can be saved to a JSON file.
 
-        Example: list_list_columns(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1",
+        Example: list_list_columns(site_id="companygroup.sharepoint.com,1111a11e-...,...-ed11bff1baf1",
                                    list_id="e11f111b-1111-11a1-1111-11f11d1a11f1")
 
         Args:
             site_id (str): The ID of the site containing the list.
             list_id (str): The ID of the list for which to retrieve the columns.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the column details
-              such as ID, name, display name, description, column group,
-              enforce unique values, hidden, indexed, read-only, and required.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the column details such as ID, name, display name, description, column group, enforce unique values,
+              hidden, indexed, read-only, and required.
         """
         self._logger.info(msg="Retrieves the columns from a specified list")
         self._logger.info(msg=site_id)
@@ -1444,7 +1365,9 @@ class SharePoint(object):
 
         # Query parameters
         # Pydantic v1
-        alias_list = [field.alias for field in ListListColumns.__fields__.values() if field.field_info.alias is not None]
+        alias_list = [
+            field.alias for field in ListListColumns.__fields__.values() if field.field_info.alias is not None
+        ]
         params = {"$select": ",".join(alias_list)}
 
         # Request
@@ -1471,12 +1394,11 @@ class SharePoint(object):
         """
         Retrieve the items from a specified list in SharePoint.
 
-        This method sends a request to the Microsoft Graph API to retrieve the
-        items associated with the specified list ID within a site. If the
-        request is successful, it will return the item details along with the
-        HTTP status code. Optionally, the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to retrieve the items associated with the specified list
+        ID within a site. If the request is successful, it will return the item details along with the HTTP status code.
+        Optionally, the response can be saved to a JSON file.
 
-        Example: list_list_items(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1",
+        Example: list_list_items(site_id="companygroup.sharepoint.com,1111a11e-...,...-ed11bff1baf1",
                                  list_id="e11f111b-1111-11a1-1111-11f11d1a11f1",
                                  fields="fields/Id,fields/Title,fields/Description")
 
@@ -1484,14 +1406,12 @@ class SharePoint(object):
             site_id (str): The ID of the site containing the list.
             list_id (str): The ID of the list for which to retrieve the items.
             fields (dict): The fields to be retrieved for each item in the list.
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the item details
-              such as ID, title, description, etc.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the item details such as ID, title, description, etc.
         """
         self._logger.info(msg="Retrieves the items from a specified list")
         self._logger.info(msg=site_id)
@@ -1539,11 +1459,10 @@ class SharePoint(object):
         """
         Delete a specified item from a list in SharePoint.
 
-        This method sends a request to the Microsoft Graph API to delete the
-        item associated with the specified item ID within a list. If the
-        request is successful, it will return the HTTP status code.
+        This method sends a request to the Microsoft Graph API to delete the item associated with the specified item ID
+        within a list. If the request is successful, it will return the HTTP status code.
 
-        Example: delete_list_item(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1",
+        Example: delete_list_item(site_id="companygroup.sharepoint.com,1111a11e-...,...-ed11bff1baf1",
                                   list_id="e11f111b-1111-11a1-1111-11f11d1a11f1",
                                   item_id="1")
 
@@ -1553,8 +1472,7 @@ class SharePoint(object):
             item_id (str): The ID of the item to be deleted.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code.
+            Response: An instance of the Response class containing the HTTP status code.
         """
         self._logger.info(msg="Deletes a specified item from a list")
         self._logger.info(msg=site_id)
@@ -1593,28 +1511,24 @@ class SharePoint(object):
         """
         Add a new item to a specified list in SharePoint.
 
-        This method sends a request to the Microsoft Graph API to add a new
-        item to the specified list ID within a site. If the request is
-        successful, it will return the item details along with the HTTP status
-        code. Optionally, the response can be saved to a JSON file.
+        This method sends a request to the Microsoft Graph API to add a new item to the specified list ID within a site.
+        If the request is successful, it will return the item details along with the HTTP status code. Optionally, the
+        response can be saved to a JSON file.
 
-        Example: add_list_item(site_id="companygroup.sharepoint.com,1111a11e-f1bb-1111-b11f-a1111b11b1b0,db1111a1-11e1-1d1c-1111-ed11bff1baf1",
+        Example: add_list_item(site_id="companygroup.sharepoint.com,1111a11e-...,...-ed11bff1baf1",
                                list_id="e11f111b-1111-11a1-1111-11f11d1a11f1",
                                item={"Title": "Hello World"})
 
         Args:
             site_id (str): The ID of the site containing the list.
             list_id (str): The ID of the list to which the item will be added.
-            item (dict): The item data to be added to the list.
-                          Example: {"Title": "Hello World"}
-            save_as (str, optional): The file path where the response will be
-              saved in JSON format. If not provided, the response will not be
-              saved.
+            item (dict): The item data to be added to the list. Example: {"Title": "Hello World"}
+            save_as (str, optional): The file path where the response will be saved in JSON format. If not provided, the
+              response will not be saved.
 
         Returns:
-            Response: An instance of the Response class containing the HTTP
-              status code and the content, which includes the details of the
-              added list item.
+            Response: An instance of the Response class containing the HTTP status code and the content, which includes
+              the details of the added list item.
         """
         self._logger.info(msg="Adds a new item to a specified list")
         self._logger.info(msg=site_id)
