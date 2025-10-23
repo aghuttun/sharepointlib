@@ -102,7 +102,7 @@ class SharePoint(object):
 
     def __del__(self) -> None:
         """
-        Cleans the house at the exit.
+        Clean the house at the exit.
         """
         self._logger.info(msg="Cleans the house at the exit")
         self._session.close()
