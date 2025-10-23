@@ -218,6 +218,11 @@ if response.status_code in (200, 201):
     print(df)
 ```
 
+```python
+# Close
+del(sharepointlib)
+```
+
 ## Installation
 
 - [sharepointlib](#sharepointlib)
