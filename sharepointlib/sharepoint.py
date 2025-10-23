@@ -1,7 +1,7 @@
 """
 This library provides access to some SharePoint functionalities.
-Its features are designed to remain generic and should not be modified to meet
-the specific needs of individual projects.
+Its features are designed to remain generic and should not be modified to meet the specific needs of individual
+projects.
 """
 
 # import base64

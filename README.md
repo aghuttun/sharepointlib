@@ -126,7 +126,7 @@ if response.status_code == 200:
 response = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
                                     filename="Sellout/Support/Sellout.xlsx")
 if response.status_code in (200, 202):
-    print(response.content.id)
+    print(response.content["id"])
     df = pd.DataFrame([response.content])
     print(df)
 ```
