@@ -220,7 +220,7 @@ if response.status_code in (200, 201):
 
 ```python
 # Close
-del(sharepointlib)
+del(sharepoint)
 ```
 
 ## Installation
