@@ -480,7 +480,6 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        
         self._logger.info(msg="Retrieving the hostname and site details for the specified site ID")
         self._logger.info(msg=site_id)
 
