@@ -3,6 +3,7 @@
 - [Description](#package-description)
 - [Usage](#usage)
 - [Installation](#installation)
+- [Docstring](#docstring)
 - [License](#license)
 
 ## Package Description
@@ -14,9 +15,7 @@ Microsoft SharePoint client Python package that uses the [requests](https://pypi
 
 ## Usage
 
-- [sharepointlib](#sharepointlib)
-
-from a script:
+From a script:
 
 ```python
 import sharepointlib
@@ -225,8 +224,6 @@ del(sharepoint)
 
 ## Installation
 
-- [sharepointlib](#sharepointlib)
-
 Install python and pip if you have not already.
 
 Then run:
@@ -251,10 +248,12 @@ cd sharepointlib
 pip install -e ".[dev]"
 ```
 
-To test the development package: [Testing](#testing)
+## Docstring
+
+The script's docstrings follow the numpydoc style.
 
 ## License
 
-- [sharepointlib](#sharepointlib)
-
 BSD License (see license file)
+
+- [sharepointlib](#sharepointlib)
