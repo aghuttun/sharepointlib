@@ -1,5 +1,5 @@
 """
-Generic SharePoint Client Library
+Generic SharePoint Client Library.
 
 This module provides a generic Python client for interacting with SharePoint sites, drives, folders, files, and lists
 via the Microsoft Graph API.
@@ -258,7 +258,7 @@ class SharePoint(object):
         This method is called when the instance is about to be destroyed. Ensure the HTTP session is closed and log
         cleanup.
         """
-        self._logger.info(msg="Cleans the house at the exit")
+        self._logger.info(msg="Cleaning the house at the exit")
         self._session.close()
 
     def auth(self) -> None:
@@ -287,7 +287,7 @@ class SharePoint(object):
         ValueError
             If the response body does not contain a valid JSON access_token.
         """
-        self._logger.info(msg="Authentication")
+        self._logger.info(msg="Authenticating")
 
         # Request headers
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -409,7 +409,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the GetSiteInfo Pydantic model.
         """
-        self._logger.info(msg="Gets the site ID for a given site name")
+        self._logger.info(msg="Retrieving the site ID for the specified site name")
         self._logger.info(msg=name)
 
         # Configuration
@@ -480,7 +480,8 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Gets the hostname and site details for a specified site ID")
+        
+        self._logger.info(msg="Retrieving the hostname and site details for the specified site ID")
         self._logger.info(msg=site_id)
 
         # Configuration
@@ -549,7 +550,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the ListDrives Pydantic model.
         """
-        self._logger.info(msg="Gets a list of the Drive IDs for a given site")
+        self._logger.info(msg="Retrieving a list of Drive IDs for the specified site.")
         self._logger.info(msg=site_id)
 
         # Configuration
@@ -617,7 +618,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the GetDirInfo Pydantic model.
         """
-        self._logger.info(msg="Gets the folder ID for a specified folder within a drive")
+        self._logger.info(msg="Retrieving the folder ID for the specified folder within the drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -685,7 +686,7 @@ class SharePoint(object):
         Send a request to the Microsoft Graph API to retrieve the list of children in the specified folder.
         If successful, return the HTTP status code and a list of items. Add the folder path to each item in the result.
         """
-        self._logger.info(msg="List content (files and folders) of a folder")
+        self._logger.info(msg="Listing the contents of the specified folder in the drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -759,7 +760,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the CreateDir Pydantic model.
         """
-        self._logger.info(msg="Creates a new folder in a specified drive")
+        self._logger.info(msg="Creating a new folder in the specified drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -834,7 +835,7 @@ class SharePoint(object):
         -----
         Return a successful HTTP status code if the folder is deleted.
         """
-        self._logger.info(msg="Deletes a folder from a specified drive")
+        self._logger.info(msg="Deleting a folder from the specified drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -893,7 +894,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the RenameFolder Pydantic model.
         """
-        self._logger.info(msg="Renames a folder in a specified drive")
+        self._logger.info(msg="Renaming a folder in the specified drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
         self._logger.info(msg=new_name)
@@ -965,7 +966,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the GetFileInfo Pydantic model.
         """
-        self._logger.info(msg="Retrieves information about a specific file")
+        self._logger.info(msg="Retrieving information about a specific file")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
 
@@ -1039,7 +1040,7 @@ class SharePoint(object):
         -----
         The copy operation is asynchronous. The response may indicate that the operation is in progress.
         """
-        self._logger.info(msg="Copy a file from one folder to another within the same drive")
+        self._logger.info(msg="Copying a file from one folder to another within the same drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=target_path)
@@ -1121,7 +1122,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the MoveFile Pydantic model.
         """
-        self._logger.info(msg="Moves a file from one folder to another within the same drive")
+        self._logger.info(msg="Moving a file from one folder to another within the same drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=target_path)
@@ -1212,7 +1213,7 @@ class SharePoint(object):
         -----
         Return a successful HTTP status code if the file is deleted.
         """
-        self._logger.info(msg="Deletes a file from a specified drive")
+        self._logger.info(msg="Deleting a file from the specified drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
 
@@ -1277,7 +1278,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Renames a file in a specified drive")
+        self._logger.info(msg="Renaming a file in the specified drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=new_name)
@@ -1352,7 +1353,7 @@ class SharePoint(object):
         -----
         If the request is successful, write the file to disk.
         """
-        self._logger.info(msg="Downloads a file from a specified remote path in a drive to a local path")
+        self._logger.info(msg="Downloading a file from the specified remote path in the drive to the local path.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=remote_path)
         self._logger.info(msg=local_path)
@@ -1408,7 +1409,7 @@ class SharePoint(object):
         Store the file content in memory as bytes. Use with caution for large files, as this may consume significant
         memory.
         """
-        self._logger.info(msg="Downloads a file from a specified remote path in a drive to a variable")
+        self._logger.info(msg="Downloading a file from the specified remote path in the drive to memory")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=remote_path)
 
@@ -1466,7 +1467,7 @@ class SharePoint(object):
         -----
         Only download files with an extension. Each result includes file metadata and download status.
         """
-        self._logger.info(msg="Downloading all files from folder")
+        self._logger.info(msg="Initiating the process of downloading all files from the specified folder.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=remote_path)
         self._logger.info(msg=local_path)
@@ -1555,7 +1556,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Uploads a file to a specified remote path in a drive")
+        self._logger.info(msg="Uploading a file to the specified remote path in the drive.")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=local_path)
         self._logger.info(msg=remote_path)
@@ -1630,7 +1631,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Retrieves a list of lists for a specified site")
+        self._logger.info(msg="Retrieving a list of lists for the specified site.")
         self._logger.info(msg=site_id)
 
         # Configuration
@@ -1704,7 +1705,8 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Retrieves the columns from a specified list")
+
+        self._logger.info(msg="Retrieving columns from the specified list.")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
 
@@ -1784,7 +1786,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Retrieves the items from a specified list")
+        self._logger.info(msg="Retrieving items from the specified list.")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
 
@@ -1855,7 +1857,7 @@ class SharePoint(object):
         ... )
         >>> print(resp.status_code)
         """
-        self._logger.info(msg="Deletes a specified item from a list")
+        self._logger.info(msg="Deleting the specified item from the list.")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
         self._logger.info(msg=item_id)
@@ -1922,7 +1924,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Adds a new item to a specified list")
+        self._logger.info(msg="Adding a new item to the specified list.")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
 
