@@ -79,8 +79,8 @@ class SharePoint(object):
 
     Methods
     -------
-    auth()
-        Authenticate using OAuth2 client credentials flow.
+    renew_token()
+        Force re-authentication to obtain a new access token.
     get_site_info(name, save_as=None)
         Retrieve the site ID for a given site name.
     get_hostname_info(site_id, save_as=None)
@@ -236,7 +236,7 @@ class SharePoint(object):
         )
 
         # Authenticate
-        self.auth()
+        self._authenticate()
 
     def __del__(self) -> None:
         """
@@ -261,7 +261,7 @@ class SharePoint(object):
         self._logger.info(msg="Cleaning the house at the exit")
         self._session.close()
 
-    def auth(self) -> None:
+    def _authenticate(self) -> None:
         """
         Authenticate the SharePoint client using OAuth2 client credentials flow.
 
@@ -292,7 +292,7 @@ class SharePoint(object):
         # Request headers
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-        # Authorization URL
+        # Authorization endpoint
         url_auth = f"https://login.microsoftonline.com/{self._configuration.tenant_id}/oauth2/v2.0/token"
 
         # Request body
@@ -303,7 +303,7 @@ class SharePoint(object):
             "scope": "https://graph.microsoft.com/.default",
         }
 
-        # Request
+        # Send request
         response = self._session.post(url=url_auth, data=body, headers=headers, verify=True)
 
         # Log response code
@@ -312,6 +312,14 @@ class SharePoint(object):
         # Return valid response
         if response.status_code == 200:
             self._configuration.token = json.loads(response.content.decode("utf-8"))["access_token"]
+
+    def renew_token(self) -> None:
+        """
+        This method forces a re-authentication to obtain a new access token.
+
+        The new token is stored in the token attribute.
+        """
+        self._authenticate()
 
     def _export_to_json(self, content: bytes, save_as: str | None) -> None:
         """
@@ -425,7 +433,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         # get_sites_id: url_query = f"https://graph.microsoft.com/v1.0/sites?search='{filter}'"
         url_query = rf"https://{api_domain}/{api_version}/sites/{sp_domain}:/sites/{name}"
 
@@ -434,7 +442,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in GetSiteInfo.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
@@ -495,7 +503,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}"
 
         # Query parameters
@@ -505,7 +513,7 @@ class SharePoint(object):
         ]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
@@ -564,7 +572,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/drives"
 
         # Query parameters
@@ -572,7 +580,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in ListDrives.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
@@ -633,7 +641,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         path_quote = "///" if path is None else f"/{quote(string=path)}"
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:{path_quote}"
         # print(url_query)
@@ -643,7 +651,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in GetDirInfo.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
 
         # Log response code
@@ -701,7 +709,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         path_quote = "/" if path is None else f"{quote(string=path)}"
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/items/root:/{path_quote}:/children"
         # print(url_query)
@@ -711,7 +719,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in ListDir.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
@@ -775,7 +783,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         path_quote = quote(string=path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}:/children"
 
@@ -792,7 +800,7 @@ class SharePoint(object):
             "@microsoft.graph.conflictBehavior": "replace",
         }
 
-        # Request
+        # Send request
         response = self._session.post(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
@@ -850,11 +858,11 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         path_quote = quote(string=path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
 
-        # Request
+        # Send request
         response = self._session.delete(url=url_query, headers=headers, verify=True)
 
         # Log response code
@@ -910,7 +918,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         path_quote = quote(string=path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{path_quote}"
 
@@ -920,7 +928,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in RenameFolder.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
@@ -981,7 +989,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         filename_quote = quote(string=filename)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{filename_quote}"
 
@@ -990,7 +998,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in GetFileInfo.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
@@ -1056,7 +1064,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         filename_quote = quote(string=filename)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{filename_quote}:/copy"
 
@@ -1072,7 +1080,7 @@ class SharePoint(object):
         if new_name is not None:
             data["name"] = new_name  # type: ignore
 
-        # Request
+        # Send request
         response = self._session.post(url=url_query, headers=headers, json=data, verify=True)
 
         # Log response code
@@ -1156,7 +1164,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/items/{file_id}"
 
         # Request body
@@ -1170,7 +1178,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in MoveFile.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
 
         # Log response code
@@ -1228,11 +1236,11 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         filename_quote = quote(string=filename)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{filename_quote}"
 
-        # Request
+        # Send request
         response = self._session.delete(url=url_query, headers=headers, verify=True)
 
         # Log response code
@@ -1294,7 +1302,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         filename_quote = quote(string=filename)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{filename_quote}"
 
@@ -1306,7 +1314,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in RenameFile.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.patch(url=url_query, headers=headers, params=params, json=data, verify=True)
         # print(response.content)
 
@@ -1365,11 +1373,11 @@ class SharePoint(object):
         # Request headers
         headers = {"Authorization": f"Bearer {token}"}
 
-        # Request query
+        # Endpoint
         remote_path_quote = quote(string=remote_path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, stream=True, verify=True)
 
         # Log response code
@@ -1420,11 +1428,11 @@ class SharePoint(object):
         # Request headers
         headers = {"Authorization": f"Bearer {token}"}
 
-        # Request query
+        # Endpoint
         remote_path_quote = quote(string=remote_path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, stream=True, verify=True)
         # print(response.content)
 
@@ -1571,7 +1579,7 @@ class SharePoint(object):
             "Content-Type": "application/octet-stream",
         }
 
-        # Request query
+        # Endpoint
         remote_path_quote = quote(string=remote_path)
         url_query = rf"https://{api_domain}/{api_version}/drives/{drive_id}/root:/{remote_path_quote}:/content"
 
@@ -1583,7 +1591,7 @@ class SharePoint(object):
         # Request body
         data = open(file=local_path, mode="rb").read()
 
-        # Request
+        # Send request
         response = self._session.put(url=url_query, headers=headers, params=params, data=data, verify=True)
         # print(response.content)
 
@@ -1645,7 +1653,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists"
 
         # Query parameters
@@ -1653,7 +1661,7 @@ class SharePoint(object):
         alias_list = [field.alias for field in ListLists.__fields__.values() if field.field_info.alias is not None]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
@@ -1721,7 +1729,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/columns"
 
         # Query parameters
@@ -1731,7 +1739,7 @@ class SharePoint(object):
         ]
         params = {"$select": ",".join(alias_list)}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
@@ -1801,13 +1809,13 @@ class SharePoint(object):
             "Accept": "application/json;odata.metadata=none",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items"
 
         # Query parameters
         params = {"select": fields, "expand": "fields"}
 
-        # Request
+        # Send request
         response = self._session.get(url=url_query, headers=headers, params=params, verify=True)
         # print(response.content)
 
@@ -1873,10 +1881,10 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items/{item_id}"
 
-        # Request
+        # Send request
         response = self._session.delete(url=url_query, headers=headers, verify=True)
 
         # Log response code
@@ -1939,7 +1947,7 @@ class SharePoint(object):
             "Accept": "application/json",
         }
 
-        # Request query
+        # Endpoint
         url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items"
 
         # Query parameters
@@ -1951,7 +1959,7 @@ class SharePoint(object):
         # @microsoft.graph.conflictBehavior: fail, rename, replace
         data = {"fields": item}
 
-        # Request
+        # Send request
         response = self._session.post(url=url_query, headers=headers, json=data, params=params, verify=True)
         # print(response.content)
 
