@@ -34,9 +34,9 @@ sp_site_id = "companygroup.sharepoint.com,1233124124"
 sp_site_drive_id = "b!1234567890"
 
 # Initialize SharePoint client
-sharepoint = sharepointlib.SharePoint(client_id=client_id, 
-                                      tenant_id=tenant_id, 
-                                      client_secret=client_secret, 
+sharepoint = sharepointlib.SharePoint(client_id=client_id,
+                                      tenant_id=tenant_id,
+                                      client_secret=client_secret,
                                       sp_domain=sp_domain)
 ```
 
@@ -69,8 +69,7 @@ if response.status_code == 200:
 
 ```python
 # Gets the folder ID for a specified folder within a drive ID
-response = sharepoint.get_dir_info(drive_id=sp_site_drive_id,
-                                   path="Sellout/Support")
+response = sharepoint.get_dir_info(drive_id=sp_site_drive_id, path="Sellout/Support")
 if response.status_code == 200:
     df = pd.DataFrame([response.content])
     print(df)
@@ -78,8 +77,7 @@ if response.status_code == 200:
 
 ```python
 # List content (files and folders) of a specific folder
-response = sharepoint.list_dir(drive_id=sp_site_drive_id, 
-                               path="Sellout/Support")
+response = sharepoint.list_dir(drive_id=sp_site_drive_id, path="Sellout/Support")
 if response.status_code == 200:
     df = pd.DataFrame(response.content)
     print(df)
@@ -87,16 +85,12 @@ if response.status_code == 200:
 
 ```python
 # Creates a new folder in a specified drive ID
-response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
-                                 path="Sellout/Support",
-                                 name="Archive")
+response = sharepoint.create_dir(drive_id=sp_site_drive_id, path="Sellout/Support", name="Archive")
 if response.status_code in (200, 201):
     df = pd.DataFrame([response.content])
     print(df)
 
-response = sharepoint.create_dir(drive_id=sp_site_drive_id, 
-                                 path="Sellout/Support",
-                                 name="Test")
+response = sharepoint.create_dir(drive_id=sp_site_drive_id, path="Sellout/Support", name="Test")
 if response.status_code in (200, 201):
     df = pd.DataFrame([response.content])
     print(df)
@@ -104,17 +98,14 @@ if response.status_code in (200, 201):
 
 ```python
 # Deletes a folder from a specified drive ID
-response = sharepoint.delete_dir(drive_id=sp_site_drive_id, 
-                                 path="Sellout/Support/Test")
+response = sharepoint.delete_dir(drive_id=sp_site_drive_id, path="Sellout/Support/Test")
 if response.status_code in (200, 204):
     print("Folder deleted successfully")
 ```
 
 ```python
 # Renames a folder in a specified drive ID
-response = sharepoint.rename_folder(drive_id=sp_site_drive_id, 
-                                    path="Sellout/Support",
-                                    new_name="Old")
+response = sharepoint.rename_folder(drive_id=sp_site_drive_id, path="Sellout/Support", new_name="Old")
 if response.status_code == 200:
     df = pd.DataFrame([response.content])
     print(df)
@@ -122,8 +113,7 @@ if response.status_code == 200:
 
 ```python
 # Retrieves information about a specific file in a drive ID
-response = sharepoint.get_file_info(drive_id=sp_site_drive_id, 
-                                    filename="Sellout/Support/Sellout.xlsx")
+response = sharepoint.get_file_info(drive_id=sp_site_drive_id, filename="Sellout/Support/Sellout.xlsx")
 if response.status_code in (200, 202):
     print(response.content["id"])
     df = pd.DataFrame([response.content])
@@ -132,7 +122,7 @@ if response.status_code in (200, 202):
 
 ```python
 # Copy a file from one folder to another within the same drive ID
-response = sharepoint.copy_file(drive_id=sp_site_drive_id, 
+response = sharepoint.copy_file(drive_id=sp_site_drive_id,
                                 filename="Sellout/Support/Archive/My Book.xlsx",
                                 target_path="Sellout/Support/",
                                 new_name="My Book Copy.xlsx")
@@ -142,8 +132,8 @@ if response.status_code in (200, 202):
 
 ```python
 # Moves a file from one folder to another within the same drive ID
-response = sharepoint.move_file(drive_id=sp_site_drive_id, 
-                                filename="Sellout/Support/Book1.xlsx", 
+response = sharepoint.move_file(drive_id=sp_site_drive_id,
+                                filename="Sellout/Support/Book1.xlsx",
                                 target_path="Sellout/Support/Archive/",
                                 new_name="My Book.xlsx")
 if response.status_code == 200:
@@ -153,16 +143,15 @@ if response.status_code == 200:
 
 ```python
 # Deletes a file from a specified drive ID
-response = sharepoint.delete_file(drive_id=sp_site_drive_id, 
-                                  filename="Sellout/Sellout.xlsx")
+response = sharepoint.delete_file(drive_id=sp_site_drive_id, filename="Sellout/Sellout.xlsx")
 if response.status_code in (200, 204):
     print("File deleted successfully")
 ```
 
 ```python
 # Renames a file in a specified drive ID.
-response = sharepoint.rename_file(drive_id=sp_site_drive_id, 
-                                  filename="Sellout/Support/Archive/Sellout.xlsx", 
+response = sharepoint.rename_file(drive_id=sp_site_drive_id,
+                                  filename="Sellout/Support/Archive/Sellout.xlsx",
                                   new_name="Sellout_New_Name.xlsx")
 if response.status_code == 200:
     df = pd.DataFrame([response.content])
@@ -174,7 +163,7 @@ if response.status_code == 200:
 # Examples for local_path (databricks):
 #   local_path=r"/Workspace/Users/admin@admin.com/Sellout.xlsm"
 #   local_path=r"/Volumes/lakehouse/sadp/Sellout.xlsm"
-response = sharepoint.download_file(drive_id=sp_site_drive_id, 
+response = sharepoint.download_file(drive_id=sp_site_drive_id,
                                     remote_path=r"Sellout/Support/Sellout.xlsx",
                                     local_path=r"C:\Users\admin\Downloads\Sellout.xlsx")
 if response.status_code == 200:
@@ -209,7 +198,7 @@ if response.status_code == 200 and response.content is not None:
 
 ```python
 # Uploads a file to a specified remote path in a SharePoint drive ID
-response = sharepoint.upload_file(drive_id=sp_site_drive_id, 
+response = sharepoint.upload_file(drive_id=sp_site_drive_id,
                                   local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",
                                   remote_path=r"Sellout/Support/Archive/Sellout.xlsx")
 if response.status_code in (200, 201):
