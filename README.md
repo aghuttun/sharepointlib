@@ -11,7 +11,7 @@
 Microsoft SharePoint client Python package that uses the [requests](https://pypi.org/project/requests/) library.
 
 > [!IMPORTANT]  
-> This packages uses pydantic~=1.0!
+> This packages uses pydantic v1!
 
 ## Usage
 
