@@ -204,11 +204,7 @@ class ListDir(BaseModel):
     @validator("last_modified_by_email", pre=True, always=True)
     def set_last_modified_by_email(cls, v, values):
         last_modified_by = values.get("last_modified_by")
-        if (
-            last_modified_by
-            and "user" in last_modified_by
-            and "email" in last_modified_by["user"]
-        ):
+        if (last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]):
             return last_modified_by["user"]["email"]
         return None
 

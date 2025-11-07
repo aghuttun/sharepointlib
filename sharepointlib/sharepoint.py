@@ -22,6 +22,7 @@ import dataclasses
 import json
 import logging
 from typing import Any, Type
+import re
 from urllib.parse import quote
 import requests
 
@@ -670,7 +671,13 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def list_dir(self, drive_id: str, path: str | None = None, save_as: str | None = None) -> Response:
+    def list_dir(
+        self,
+        drive_id: str,
+        path: str | None = None,
+        alias: str | None = None,
+        save_as: str | None = None,
+    ) -> Response:
         """
         List the contents (files and folders) of a folder in a SharePoint drive.
 
@@ -680,6 +687,8 @@ class SharePoint(object):
             ID of the drive containing the folder.
         path : str, optional
             Path of the folder to list. If None, use the root folder.
+        alias : str, optional
+            Regex pattern to extract an alias from the item names. If provided, the alias will be added to each item.
         save_as : str, optional
             Path to save the results as a JSON file. If None, do not save.
 
@@ -738,8 +747,10 @@ class SharePoint(object):
             content = self._handle_response(response=response, model=ListDir, rtype="list")
 
             # Add path to each item
+            # Also extract alias from name if regex provided
             for item in content:
                 item["path"] = path or "/"
+                item["alias"] = re.sub(alias, "", item.get("name", "")) if alias else None
 
         return self.Response(status_code=response.status_code, content=content)
 
