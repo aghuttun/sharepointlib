@@ -753,7 +753,7 @@ class SharePoint(object):
                 item["alias"] = (
                     re.sub(pattern=alias, repl="", string=item.get("name", ""))
                     if alias
-                    else item.get("name", "")
+                    else re.sub(pattern=r"$^", repl="", string=item.get("name", ""))
                 )
 
         return self.Response(status_code=response.status_code, content=content)
