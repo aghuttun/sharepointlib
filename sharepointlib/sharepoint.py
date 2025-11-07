@@ -750,7 +750,7 @@ class SharePoint(object):
             # Also extract alias from name if regex provided
             for item in content:
                 item["path"] = path or "/"
-                item["alias"] = re.sub(alias, "", item.get("name", "")) if alias else None
+                item["alias"] = re.sub(pattern=alias, repl="", string=item.get("name", "")) if alias else ""
 
         return self.Response(status_code=response.status_code, content=content)
 
