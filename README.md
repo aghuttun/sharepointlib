@@ -84,6 +84,20 @@ if response.status_code == 200:
 ```
 
 ```python
+# List content (files and folders) of a specific folder changing the filename
+#
+# The "alias" column allows simplifying the value of the "name" column using regular expressions.
+# Example: column name: My_Filename_20251107.xlsx –> alias parameter: r"_\d{8}" –> alias column: My_Filename.xlsx.
+#
+# If the alias is set to None, then the regular expression r"$^" is used; which means the alias column will be identical
+# to the name column - in other words, the value of the "alias" column will be the same as that of the "name" column.
+response = sharepoint.list_dir(drive_id=sp_site_drive_id, path="Sellout/Support", alias=r"_\d{8}")
+if response.status_code == 200:
+    df = pd.DataFrame(response.content)
+    print(df)
+```
+
+```python
 # Creates a new folder in a specified drive ID
 response = sharepoint.create_dir(drive_id=sp_site_drive_id, path="Sellout/Support", name="Archive")
 if response.status_code in (200, 201):
