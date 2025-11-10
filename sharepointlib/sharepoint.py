@@ -37,6 +37,8 @@ from .models import (
     CreateDir,
     RenameFolder,
     GetFileInfo,
+    CheckOutFile,
+    CheckInFile,
     MoveFile,
     RenameFile,
     UploadFile,
@@ -345,7 +347,7 @@ class SharePoint(object):
         If `save_as` is specified, write the content to the file in binary mode.
         """
         if save_as is not None:
-            self._logger.info(msg="Exports response to JSON file.")
+            self._logger.info(msg="Exporting response to JSON file")
             with open(file=save_as, mode="wb") as file:
                 file.write(content)
 
@@ -558,7 +560,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the ListDrives Pydantic model.
         """
-        self._logger.info(msg="Retrieving a list of Drive IDs for the specified site.")
+        self._logger.info(msg="Retrieving a list of Drive IDs for the specified site")
         self._logger.info(msg=site_id)
 
         # Configuration
@@ -626,7 +628,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the GetDirInfo Pydantic model.
         """
-        self._logger.info(msg="Retrieving the folder ID for the specified folder within the drive.")
+        self._logger.info(msg="Retrieving the folder ID for the specified folder within the drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -702,7 +704,7 @@ class SharePoint(object):
         Send a request to the Microsoft Graph API to retrieve the list of children in the specified folder.
         If successful, return the HTTP status code and a list of items. Add the folder path to each item in the result.
         """
-        self._logger.info(msg="Listing the contents of the specified folder in the drive.")
+        self._logger.info(msg="Listing the contents of the specified folder in the drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -857,7 +859,7 @@ class SharePoint(object):
         -----
         Return a successful HTTP status code if the folder is deleted.
         """
-        self._logger.info(msg="Deleting a folder from the specified drive.")
+        self._logger.info(msg="Deleting a folder from the specified drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
 
@@ -916,7 +918,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the RenameFolder Pydantic model.
         """
-        self._logger.info(msg="Renaming a folder in the specified drive.")
+        self._logger.info(msg="Renaming a folder in the specified drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=path)
         self._logger.info(msg=new_name)
@@ -1033,6 +1035,175 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
+    def check_out_file(self, drive_id: str, filename: str, save_as: str | None = None) -> Response:
+        """
+        Perform a check-out on a SharePoint file.
+
+        Lock the file for exclusive editing by the authenticated user. This operation is only supported in document
+        libraries where check-out is required.
+
+        Parameters
+        ----------
+        drive_id : str
+            Identify the drive (document library) that contains the file.
+        filename : str
+            Specify the full path of the file, including the filename (e.g. "Folder/Subfolder/report.docx").
+        save_as : str | None, optional
+            Save the raw JSON response to the given file path. If None (default), do not write a file.
+
+        Returns
+        -------
+        Response
+            Contain the HTTP status code and, on success, the updated driveItem (including the publication facet
+            showing the checkout state).
+
+        Raises
+        ------
+        RuntimeError
+            Propagate any error returned by the underlying get_file_info call.
+
+        See Also
+        --------
+        check_in_file : Release the lock and publish a new version.
+        """
+        self._logger.info(msg="Initiating check-out process for the file")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=filename)
+
+        # Obtain the file ID using get_file_info
+        file_info = self.get_file_info(drive_id=drive_id, filename=filename)
+
+        if file_info.status_code != 200:
+            return self.Response(status_code=file_info.status_code, content=None)
+
+        file_id = file_info.content["id"]
+
+        # Build request
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
+
+        # Request headers
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        # Endpoint
+        url = f"https://{api_domain}/{api_version}/drives/{drive_id}/items/{file_id}/checkout"
+
+        # Query parameters
+        # Pydantic v1
+        alias_list = [field.alias for field in CheckOutFile.__fields__.values() if field.field_info.alias]
+        params = {"$select": ",".join(alias_list)} if alias_list else None
+
+        # Send request
+        response = self._session.post(url=url, headers=headers, params=params, verify=True)
+
+        # Log response code
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
+
+        # Output
+        content = None
+        if response.status_code in (200, 204):
+            self._logger.info(msg="Check-out completed successfully")
+
+            # Export response to json file
+            self._export_to_json(content=response.content, save_as=save_as)
+
+            # Deserialize json (scalar values)
+            content = self._handle_response(response=response, model=CheckOutFile, rtype="scalar")
+
+        return self.Response(status_code=response.status_code, content=content)
+
+    def check_in_file(
+        self,
+        drive_id: str,
+        filename: str,
+        comment: str | None = None,
+        save_as: str | None = None,
+    ) -> Response:
+        """
+        Perform a check-in on a SharePoint file.
+
+        Release the exclusive lock and, if versioning is enabled, create a new version. The file must be in a
+        checked-out state.
+
+        Parameters
+        ----------
+        drive_id : str
+            Identify the drive (document library) that contains the file.
+        filename : str
+            Specify the full path of the file, including the filename.
+        comment : str | None, optional
+            Provide a version comment. Required when the library uses major versioning; ignored otherwise.
+        save_as : str | None, optional
+            Save the raw JSON response to the given file path. If None (default), do not write a file.
+
+        Returns
+        -------
+        Response
+            Contain the HTTP status code and, on success, the updated driveItem (publication.level will be "published").
+
+        Raises
+        ------
+        RuntimeError
+            Propagate any error returned by the underlying get_file_info call.
+        """
+        self._logger.info(msg="Initiating check-in process for the file")
+        self._logger.info(msg=drive_id)
+        self._logger.info(msg=filename)
+
+        # Obtain the file ID using get_file_info
+        file_info = self.get_file_info(drive_id=drive_id, filename=filename)
+
+        if file_info.status_code != 200:
+            return self.Response(status_code=file_info.status_code, content=None)
+
+        file_id = file_info.content["id"]
+
+        # Build request
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
+
+        # Request headers
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+
+        # Endpoint
+        url = f"https://{api_domain}/{api_version}/drives/{drive_id}/items/{file_id}/checkin"
+
+        data: dict = {}
+        if comment:
+            data["comment"] = comment
+
+        # Query parameters
+        # Pydantic v1
+        alias_list = [field.alias for field in CheckInFile.__fields__.values() if field.field_info.alias]
+        params = {"$select": ",".join(alias_list)} if alias_list else None
+
+        # Send request
+        response = self._session.post(url=url, headers=headers, params=params, json=data, verify=True)
+
+        # Log response code
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
+
+        # Output
+        content = None
+        if response.status_code in (200, 204):
+            self._logger.info(msg="Check-in completed successfully")
+
+            # Export response to json file
+            self._export_to_json(content=response.content, save_as=save_as)
+
+            # Deserialize json (scalar values)
+            content = self._handle_response(response=response, model=CheckInFile, rtype="scalar")
+
+        return self.Response(status_code=response.status_code, content=content)
+
     def copy_file(self, drive_id: str, filename: str, target_path: str, new_name: str | None = None) -> Response:
         """
         Copy a file from one folder to another within the same drive.
@@ -1062,7 +1233,7 @@ class SharePoint(object):
         -----
         The copy operation is asynchronous. The response may indicate that the operation is in progress.
         """
-        self._logger.info(msg="Copying a file from one folder to another within the same drive.")
+        self._logger.info(msg="Copying a file from one folder to another within the same drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=target_path)
@@ -1144,7 +1315,7 @@ class SharePoint(object):
         -----
         Validate the returned content using the MoveFile Pydantic model.
         """
-        self._logger.info(msg="Moving a file from one folder to another within the same drive.")
+        self._logger.info(msg="Moving a file from one folder to another within the same drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=target_path)
@@ -1235,7 +1406,7 @@ class SharePoint(object):
         -----
         Return a successful HTTP status code if the file is deleted.
         """
-        self._logger.info(msg="Deleting a file from the specified drive.")
+        self._logger.info(msg="Deleting a file from the specified drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
 
@@ -1300,7 +1471,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Renaming a file in the specified drive.")
+        self._logger.info(msg="Renaming a file in the specified drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=filename)
         self._logger.info(msg=new_name)
@@ -1375,7 +1546,7 @@ class SharePoint(object):
         -----
         If the request is successful, write the file to disk.
         """
-        self._logger.info(msg="Downloading a file from the specified remote path in the drive to the local path.")
+        self._logger.info(msg="Downloading a file from the specified remote path in the drive to the local path")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=remote_path)
         self._logger.info(msg=local_path)
@@ -1489,7 +1660,7 @@ class SharePoint(object):
         -----
         Only download files with an extension. Each result includes file metadata and download status.
         """
-        self._logger.info(msg="Initiating the process of downloading all files from the specified folder.")
+        self._logger.info(msg="Initiating the process of downloading all files from the specified folder")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=remote_path)
         self._logger.info(msg=local_path)
@@ -1578,7 +1749,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Uploading a file to the specified remote path in the drive.")
+        self._logger.info(msg="Uploading a file to the specified remote path in the drive")
         self._logger.info(msg=drive_id)
         self._logger.info(msg=local_path)
         self._logger.info(msg=remote_path)
@@ -1653,7 +1824,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Retrieving a list of lists for the specified site.")
+        self._logger.info(msg="Retrieving a list of lists for the specified site")
         self._logger.info(msg=site_id)
 
         # Configuration
@@ -1728,7 +1899,7 @@ class SharePoint(object):
         >>> print(resp.content)
         """
 
-        self._logger.info(msg="Retrieving columns from the specified list.")
+        self._logger.info(msg="Retrieving columns from the specified list")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
 
@@ -1808,7 +1979,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Retrieving items from the specified list.")
+        self._logger.info(msg="Retrieving items from the specified list")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
 
@@ -1879,7 +2050,7 @@ class SharePoint(object):
         ... )
         >>> print(resp.status_code)
         """
-        self._logger.info(msg="Deleting the specified item from the list.")
+        self._logger.info(msg="Deleting the specified item from the list")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
         self._logger.info(msg=item_id)
@@ -1926,7 +2097,7 @@ class SharePoint(object):
         list_id : str
             ID of the list to which the item will be added.
         item : dict
-            Item data to add to the list. Example: {"Title": "Hello World"}
+            Item data to add to the list. (e.g. {"Title": "Hello World"})
         save_as : str, optional
             File path to save the response in JSON format. If not provided, do not save the response.
 
@@ -1946,7 +2117,7 @@ class SharePoint(object):
         >>> print(resp.status_code)
         >>> print(resp.content)
         """
-        self._logger.info(msg="Adding a new item to the specified list.")
+        self._logger.info(msg="Adding a new item to the specified list")
         self._logger.info(msg=site_id)
         self._logger.info(msg=list_id)
 

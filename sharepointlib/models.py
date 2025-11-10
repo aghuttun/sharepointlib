@@ -316,6 +316,59 @@ class GetFileInfo(BaseModel):
         return super().dict(*args, **kwargs)
 
 
+class CheckOutFile(BaseModel):
+    """
+    Represent a SharePoint drive item after a successful check-out operation.
+
+    Contain the minimal properties returned by the Microsoft Graph API when a file is checked out. The publication
+    facet, when present, indicates the checkout state.
+
+    Parameters
+    ----------
+    id : str
+        Identify the unique drive item.
+    name : str
+        Provide the file name (including extension).
+    publication : dict | None, optional
+        Include the publication facet (e.g. {"level": "checkout", "checkedOutBy": {...}}).
+        May be None if the API does not return it.
+
+    See Also
+    --------
+    CheckInFile : Model for the item after check-in.
+    """
+
+    id: str
+    name: str
+    publication: dict | None = None
+
+
+class CheckInFile(BaseModel):
+    """
+    Represent a SharePoint drive item after a successful check-in operation.
+
+    Contain the minimal properties returned by the Microsoft Graph API when a file is checked in. The publication facet,
+    when present, shows the published state.
+
+    Parameters
+    ----------
+    id : str
+        Identify the unique drive item.
+    name : str
+        Provide the file name (including extension).
+    publication : dict | None, optional
+        Include the publication facet (e.g. {"level": "published"}). May be None if the API does not return it.
+
+    See Also
+    --------
+    CheckOutFile : Model for the item after check-out.
+    """
+
+    id: str
+    name: str
+    publication: dict | None = None
+
+
 class MoveFile(BaseModel):
     """
     Represent the data structure for move_file() responses.

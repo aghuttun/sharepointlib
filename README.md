@@ -135,6 +135,24 @@ if response.status_code in (200, 202):
 ```
 
 ```python
+# Perform check-out of a file
+response = sharepoint.check_out_file(drive_id=sp_site_drive_id, filename="Sellout/Support/Sellout.xlsx")
+if response.status_code in (200, 204):
+    print("Check-out completed successfully")
+```
+
+```python
+# Perform check-in of a file
+response = sharepoint.check_in_file(
+    drive_id=sp_site_drive_id,
+    filename="Sellout/Support/Sellout.xlsx",
+    comment="Reviewed and approved"
+)
+if response.status_code in (200, 204):
+    print("Check-in completed successfully")
+```
+
+```python
 # Copy a file from one folder to another within the same drive ID
 response = sharepoint.copy_file(drive_id=sp_site_drive_id,
                                 filename="Sellout/Support/Archive/My Book.xlsx",
