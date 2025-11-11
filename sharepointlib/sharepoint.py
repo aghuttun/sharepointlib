@@ -1035,7 +1035,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def check_out_file(self, drive_id: str, filename: str, save_as: str | None = None) -> Response:
+    def check_out_file(self, drive_id: str, filename: str) -> Response:
         """
         Perform a check-out on a SharePoint file.
 
@@ -1048,8 +1048,6 @@ class SharePoint(object):
             Identify the drive (document library) that contains the file.
         filename : str
             Specify the full path of the file, including the filename (e.g. "Folder/Subfolder/report.docx").
-        save_as : str | None, optional
-            Save the raw JSON response to the given file path. If None (default), do not write a file.
 
         Returns
         -------
@@ -1108,21 +1106,9 @@ class SharePoint(object):
         if response.status_code in (200, 204):
             self._logger.info(msg="Check-out completed successfully")
 
-            # Export response to json file
-            self._export_to_json(content=response.content, save_as=save_as)
-
-            # Deserialize json (scalar values)
-            content = self._handle_response(response=response, model=CheckOutFile, rtype="scalar")
-
         return self.Response(status_code=response.status_code, content=content)
 
-    def check_in_file(
-        self,
-        drive_id: str,
-        filename: str,
-        comment: str | None = None,
-        save_as: str | None = None,
-    ) -> Response:
+    def check_in_file(self, drive_id: str, filename: str, comment: str | None = None) -> Response:
         """
         Perform a check-in on a SharePoint file.
 
@@ -1137,8 +1123,6 @@ class SharePoint(object):
             Specify the full path of the file, including the filename.
         comment : str | None, optional
             Provide a version comment. Required when the library uses major versioning; ignored otherwise.
-        save_as : str | None, optional
-            Save the raw JSON response to the given file path. If None (default), do not write a file.
 
         Returns
         -------
@@ -1195,12 +1179,6 @@ class SharePoint(object):
         content = None
         if response.status_code in (200, 204):
             self._logger.info(msg="Check-in completed successfully")
-
-            # Export response to json file
-            self._export_to_json(content=response.content, save_as=save_as)
-
-            # Deserialize json (scalar values)
-            content = self._handle_response(response=response, model=CheckInFile, rtype="scalar")
 
         return self.Response(status_code=response.status_code, content=content)
 
