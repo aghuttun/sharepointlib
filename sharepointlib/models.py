@@ -6,6 +6,7 @@ validation and serialization of SharePoint API responses using Pydantic.
 """
 
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, Field, validator
 
 
@@ -173,16 +174,16 @@ class ListDir(BaseModel):
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
-    extension: str | None = None
+    extension: Optional[str] = None
     size: int = Field(None, alias="size")
-    path: str | None = None
+    path: Optional[str] = None
     web_url: str = Field(None, alias="webUrl")
     folder: dict = Field(None, alias="folder")
     created_date_time: datetime = Field(alias="createdDateTime")
     last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
     last_modified_by: dict = Field(None, alias="lastModifiedBy")
-    last_modified_by_name: str | None = None
-    last_modified_by_email: str | None = None
+    last_modified_by_name: Optional[str] = None
+    last_modified_by_email: Optional[str] = None
 
     @validator("extension", pre=True, always=True)
     def set_extension(cls, v, values):
@@ -297,7 +298,7 @@ class GetFileInfo(BaseModel):
     created_date_time: datetime = Field(alias="createdDateTime")
     last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
     last_modified_by: dict = Field(None, alias="lastModifiedBy")
-    last_modified_by_email: str | None = None
+    last_modified_by_email: Optional[str] = None
 
     @validator("last_modified_by_email", pre=True, always=True)
     def set_last_modified_by_email(cls, v, values):
@@ -340,7 +341,7 @@ class CheckOutFile(BaseModel):
 
     id: str
     name: str
-    publication: dict | None = None
+    publication: Optional[dict] = None
 
 
 class CheckInFile(BaseModel):
@@ -366,7 +367,38 @@ class CheckInFile(BaseModel):
 
     id: str
     name: str
-    publication: dict | None = None
+    publication: Optional[dict] = None
+
+
+class CopyFileStream(BaseModel):
+    """
+    Represent the data structure for copy_file_stream() responses.
+
+    Define fields for SharePoint file copy metadata, including identifiers, names, URLs, sizes, and timestamps for
+    creation and modification.
+
+    Parameters
+    ----------
+    id : str
+        Specify the unique identifier of the copied SharePoint file.
+    name : str
+        Specify the name of the copied SharePoint file.
+    web_url : str, optional
+        Specify the web URL of the copied SharePoint file.
+    size : int, optional
+        Specify the size of the copied SharePoint file in bytes.
+    created_date_time : datetime
+        Specify the creation date and time of the SharePoint file.
+    last_modified_date_time : datetime, optional
+        Specify the last modification date and time of the SharePoint file.
+    """
+
+    id: str = Field(alias="id")
+    name: str = Field(alias="name")
+    web_url: str = Field(None, alias="webUrl")
+    size: int = Field(None, alias="size")
+    created_date_time: datetime = Field(alias="createdDateTime")
+    last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
 
 
 class MoveFile(BaseModel):

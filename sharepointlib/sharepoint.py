@@ -21,7 +21,7 @@ Intended for use as a utility library in broader data engineering and automation
 import dataclasses
 import json
 import logging
-from typing import Any, Type
+from typing import Any, Optional, Type
 import re
 from urllib.parse import quote
 import requests
@@ -39,6 +39,7 @@ from .models import (
     GetFileInfo,
     CheckOutFile,
     CheckInFile,
+    CopyFileStream,
     MoveFile,
     RenameFile,
     UploadFile,
@@ -155,13 +156,13 @@ class SharePoint(object):
             Specify the OAuth2 access token for API requests.
         """
 
-        api_domain: str | None = None
-        api_version: str | None = None
-        sp_domain: str | None = None
-        client_id: str | None = None
-        tenant_id: str | None = None
-        client_secret: str | None = None
-        token: str | None = None
+        api_domain: Optional[str] = None
+        api_version: Optional[str] = None
+        sp_domain: Optional[str] = None
+        client_id: Optional[str] = None
+        tenant_id: Optional[str] = None
+        client_secret: Optional[str] = None
+        token: Optional[str] = None
 
     @dataclasses.dataclass
     class Response:
@@ -193,7 +194,7 @@ class SharePoint(object):
         tenant_id: str,
         client_secret: str,
         sp_domain: str,
-        custom_logger: logging.Logger | None = None,
+        custom_logger: Optional[logging.Logger] = None,
     ) -> None:
         """
         Initialize the SharePoint client.
@@ -324,7 +325,7 @@ class SharePoint(object):
         """
         self._authenticate()
 
-    def _export_to_json(self, content: bytes, save_as: str | None) -> None:
+    def _export_to_json(self, content: bytes, save_as: Optional[str]) -> None:
         """
         Export response content to a JSON file.
 
@@ -396,7 +397,7 @@ class SharePoint(object):
         # Convert to a list of dicts
         return [item.dict() for item in validated_list]
 
-    def get_site_info(self, name: str, save_as: str | None = None) -> Response:
+    def get_site_info(self, name: str, save_as: Optional[str] = None) -> Response:
         """
         Retrieve the site ID for a given site name.
 
@@ -464,7 +465,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def get_hostname_info(self, site_id: str, save_as: str | None = None) -> Response:
+    def get_hostname_info(self, site_id: str, save_as: Optional[str] = None) -> Response:
         """
         Retrieve the hostname and site details for a specified site ID.
 
@@ -536,7 +537,7 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     # DRIVES
-    def list_drives(self, site_id: str, save_as: str | None = None) -> Response:
+    def list_drives(self, site_id: str, save_as: Optional[str] = None) -> Response:
         """
         List Drive IDs for a given site.
 
@@ -602,7 +603,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def get_dir_info(self, drive_id: str, path: str | None = None, save_as: str | None = None) -> Response:
+    def get_dir_info(self, drive_id: str, path: Optional[str] = None, save_as: Optional[str] = None) -> Response:
         """
         Get the folder ID for a specified folder within a drive.
 
@@ -676,9 +677,9 @@ class SharePoint(object):
     def list_dir(
         self,
         drive_id: str,
-        path: str | None = None,
-        alias: str | None = None,
-        save_as: str | None = None,
+        path: Optional[str] = None,
+        alias: Optional[str] = None,
+        save_as: Optional[str] = None,
     ) -> Response:
         """
         List the contents (files and folders) of a folder in a SharePoint drive.
@@ -760,7 +761,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def create_dir(self, drive_id: str, path: str, name: str, save_as: str | None = None) -> Response:
+    def create_dir(self, drive_id: str, path: str, name: str, save_as: Optional[str] = None) -> Response:
         """
         Create a new folder in a specified drive.
 
@@ -892,7 +893,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def rename_folder(self, drive_id: str, path: str, new_name: str, save_as: str | None = None) -> Response:
+    def rename_folder(self, drive_id: str, path: str, new_name: str, save_as: Optional[str] = None) -> Response:
         """
         Rename a folder in a specified drive.
 
@@ -964,7 +965,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def get_file_info(self, drive_id: str, filename: str, save_as: str | None = None) -> Response:
+    def get_file_info(self, drive_id: str, filename: str, save_as: Optional[str] = None) -> Response:
         """
         Retrieve information about a specific file in a drive.
 
@@ -1108,7 +1109,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def check_in_file(self, drive_id: str, filename: str, comment: str | None = None) -> Response:
+    def check_in_file(self, drive_id: str, filename: str, comment: Optional[str] = None) -> Response:
         """
         Perform a check-in on a SharePoint file.
 
@@ -1121,7 +1122,7 @@ class SharePoint(object):
             Identify the drive (document library) that contains the file.
         filename : str
             Specify the full path of the file, including the filename.
-        comment : str | None, optional
+        comment : Optional[str], optional
             Provide a version comment. Required when the library uses major versioning; ignored otherwise.
 
         Returns
@@ -1182,7 +1183,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def copy_file(self, drive_id: str, filename: str, target_path: str, new_name: str | None = None) -> Response:
+    def copy_file(self, drive_id: str, filename: str, target_path: str, new_name: Optional[str] = None) -> Response:
         """
         Copy a file from one folder to another within the same drive.
 
@@ -1257,8 +1258,201 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
+    def copy_file_stream(
+        self,
+        source_drive_id: str,
+        source_path: str,
+        target_drive_id: str,
+        target_path: str,
+        timeout: int = 3600,
+        new_name: Optional[str] = None,
+        save_as: Optional[str] = None,
+    ) -> Response:
+        """
+        Copy a file from one SharePoint drive to another using streaming.
+
+        This method transfers a file between two different document libraries (drives) without loading the entire file
+        into memory or saving it locally. It uses the Microsoft Graph API to create an upload session in the target
+        drive and streams the file from the source drive in chunks.
+
+        Parameters
+        ----------
+        source_drive_id : str
+            The ID of the source SharePoint drive (document library).
+        source_path : str
+            The full path of the file in the source drive, including the filename.
+        target_drive_id : str
+            The ID of the target SharePoint drive (document library).
+        target_path : str
+            The folder path in the target drive where the file will be uploaded.
+        timeout : int, optional
+            The timeout in seconds for HTTP requests. Default is 60 seconds.
+        new_name : str, optional
+            A new name for the file in the target drive. If None, the original name is retained.
+        save_as : str, optional
+            The file path to save the response in JSON format. If None, do not save the response.
+
+        Returns
+        -------
+        Response
+            A Response object containing the HTTP status code and a message indicating
+            the result of the copy operation.
+
+        Notes
+        -----
+        - This method uses an upload session to handle large files efficiently.
+        - The operation is performed in chunks to avoid memory overload.
+        - The Microsoft Graph API endpoints used:
+            - Create upload session: /createUploadSession
+            - Download file content: /content
+        """
+        self._logger.info(msg="Copying file between drives using streaming")
+
+        # Configuration
+        token = self._configuration.token
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
+
+        # 1. Get file info (size)
+        src_info = self.get_file_info(drive_id=source_drive_id, filename=source_path)
+
+        if src_info.status_code != 200:
+            return self.Response(status_code=src_info.status_code, content=None)
+
+        total_size = src_info.content["size"]  # already int
+
+        # Determine the file name for the target drive
+        file_name = new_name or source_path.split("/")[-1]
+        remote_path = f"{target_path.rstrip('/')}/{file_name}"
+        remote_path_quote = quote(remote_path, safe="/")  # preserve slashes
+
+        # 2. TARGET (UPLOAD) SESSION
+        # Request headers
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+        # Endpoint to create an upload session in the target drive
+        target_url_query = rf"https://{api_domain}/{api_version}/drives/{target_drive_id}/root:/{remote_path_quote}:/createUploadSession"
+
+        # Request body
+        # fail or replace
+        body = {"item": {"@microsoft.graph.conflictBehavior": "replace"}}
+
+        # Send request
+        target_session = self._session.post(target_url_query, headers=headers, json=body, timeout=timeout)
+
+        if target_session.status_code != 200:
+            # Log response code
+            self._logger.info(msg=f"HTTP Status Code (Target) {target_session.status_code}")
+            return self.Response(status_code=target_session.status_code, content=None)
+
+        # Session upload URL
+        upload_url_session = target_session.json()["uploadUrl"]
+
+        # 3. SOURCE (DOWNLOAD) SESSION
+        # Request headers
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+        # Endpoint to create an download session in the source drive
+        quote_source_path = quote(string=source_path, safe="/")  # preserve slashes
+        source_url_query = rf"https://{api_domain}/{api_version}/drives/{source_drive_id}/root:/{quote_source_path}:/content"
+
+        # Send request
+        source_response = self._session.get(source_url_query, headers=headers, stream=True, timeout=timeout)
+
+        if source_response.status_code != 200:
+            # Log response code
+            self._logger.info(msg=f"HTTP Status Code (Source) {source_response.status_code}")
+            return self.Response(status_code=source_response.status_code, content=None)
+
+        # 4. STREAMING UPLOAD
+        chunk_size = 10 * 1024 * 1024  # 10 MB
+        start = 0
+        last_response = requests.Response()
+
+        if total_size == 0:
+            headers_empty = {
+                "Content-Length": "0",
+                "Content-Range": f"bytes */{total_size}",
+            }
+
+            put_response = requests.put(
+                upload_url_session,
+                headers=headers_empty,
+                data=b"",  # corpo vazio
+                timeout=timeout
+            )
+
+            # Get last response
+            last_response = put_response
+
+            if put_response.status_code not in (200, 201, 202):
+                # Log response code
+                self._logger.info(msg=f"HTTP Status Code {put_response.status_code}")
+                return self.Response(status_code=put_response.status_code, content=None)
+
+        else:
+            for chunk in source_response.iter_content(chunk_size=chunk_size):
+                end = start + len(chunk) - 1
+
+                # Dynamic headers for each chunk
+                headers_chunk = {
+                    "Content-Range": f"bytes {start}-{end}/{str(total_size)}",
+                    "Content-Type": "application/octet-stream",
+                    "Content-Length": str(len(chunk)),
+                }
+
+                # Send request
+                # put_response = self._session.put(
+                put_response = requests.put(
+                    upload_url_session,
+                    headers=headers_chunk,
+                    data=chunk,
+                    timeout=timeout,
+                )
+
+                # Get last response
+                last_response = put_response
+
+                if put_response.status_code not in (200, 201, 202):
+                    # Log response code
+                    self._logger.info(msg=f"HTTP Status Code {put_response.status_code}")
+                    return self.Response(status_code=put_response.status_code, content=None)
+
+                start = end + 1
+
+        # Close stream
+        source_response.close()
+
+        # Log response code
+        self._logger.info(msg=f"HTTP Status Code {last_response.status_code}")
+
+        # Output
+        content = None
+        if last_response and last_response.status_code in (200, 201, 202):
+            self._logger.info(msg="Request successful")
+
+            # Export response to json file
+            self._export_to_json(content=last_response.content, save_as=save_as)
+
+            # Deserialize json (scalar values)
+            content = self._handle_response(response=last_response, model=CopyFileStream, rtype="scalar")
+
+        return self.Response(status_code=last_response.status_code, content=content)
+
     def move_file(
-        self, drive_id: str, filename: str, target_path: str, new_name: str | None = None, save_as: str | None = None
+        self, drive_id: str,
+        filename: str,
+        target_path: str,
+        new_name: Optional[str] = None,
+        save_as: Optional[str] = None
     ) -> Response:
         """
         Move a file from one folder to another within the same drive.
@@ -1417,7 +1611,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def rename_file(self, drive_id: str, filename: str, new_name: str, save_as: str | None = None) -> Response:
+    def rename_file(self, drive_id: str, filename: str, new_name: str, save_as: Optional[str] = None) -> Response:
         """
         Rename a file in a specified drive.
 
@@ -1692,7 +1886,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def upload_file(self, drive_id: str, local_path: str, remote_path: str, save_as: str | None = None) -> Response:
+    def upload_file(self, drive_id: str, local_path: str, remote_path: str, save_as: Optional[str] = None) -> Response:
         """
         Upload a file to a specified remote path in a SharePoint drive.
 
@@ -1776,7 +1970,7 @@ class SharePoint(object):
         return self.Response(status_code=response.status_code, content=content)
 
     # LISTS
-    def list_lists(self, site_id: str, save_as: str | None = None) -> Response:
+    def list_lists(self, site_id: str, save_as: Optional[str] = None) -> Response:
         """
         Retrieve SharePoint lists for a specified site.
 
@@ -1845,7 +2039,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def list_list_columns(self, site_id: str, list_id: str, save_as: str | None = None) -> Response:
+    def list_list_columns(self, site_id: str, list_id: str, save_as: Optional[str] = None) -> Response:
         """
         Retrieve columns from a specified SharePoint list.
 
@@ -1923,7 +2117,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def list_list_items(self, site_id: str, list_id: str, fields: dict, save_as: str | None = None) -> Response:
+    def list_list_items(self, site_id: str, list_id: str, fields: dict, save_as: Optional[str] = None) -> Response:
         """
         Retrieve items from a specified SharePoint list.
 
@@ -2061,7 +2255,7 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
-    def add_list_item(self, site_id: str, list_id: str, item: dict, save_as: str | None = None) -> Response:
+    def add_list_item(self, site_id: str, list_id: str, item: dict, save_as: Optional[str] = None) -> Response:
         """
         Add a new item to a SharePoint list.
 

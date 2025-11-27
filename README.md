@@ -195,6 +195,28 @@ if response.status_code in (200, 202):
 ```
 
 ```python
+# Copy a file from one drive/site to another (cross-drive copy)
+# Copies a file from one drive (or site) to another drive/site – even across 
+# different sites!
+# This is the ONLY reliable method to copy files BETWEEN different document 
+# libraries/drives
+# Works efficiently with files of any size (0 bytes → several GB) using streaming
+response = sharepoint.copy_file_stream(
+    source_drive_id="b!ABC123...",
+    source_path="Sellout/2024/Sellout_November.xlsx",
+    target_drive_id="b!XYZ987...",
+    target_path="Archive/2024",
+    new_name="Sellout_November_2024_Backup.xlsx",
+    timeout=7200
+)
+
+if response.status_code in (200, 201):
+    print("File copied successfully between drives!")
+    df = pd.DataFrame([response.content])
+    print(df)
+```
+
+```python
 # Moves a file from one folder to another within the same drive ID
 response = sharepoint.move_file(
     drive_id=sp_site_drive_id,
