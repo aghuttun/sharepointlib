@@ -1014,8 +1014,6 @@ class SharePoint(object):
         # Query parameters
         # Pydantic v1
         alias_list = [field.alias for field in GetFileInfo.__fields__.values() if field.field_info.alias is not None]
-        if "@microsoft.graph.downloadUrl" not in alias_list:
-            alias_list.append("@microsoft.graph.downloadUrl")
         params = {"$select": ",".join(alias_list)}
 
         # Send request
@@ -1260,6 +1258,21 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
+    def get_download_url(self, drive_id: str, filename: str) -> Optional[str]:
+        """
+        Get only @microsoft.graph.downloadUrl.
+        """
+        url = f"https://{self._configuration.api_domain}/{self._configuration.api_version}/drives/{drive_id}/root:/{quote(filename)}:/content"
+        headers = {"Authorization": f"Bearer {self._configuration.token}"}
+
+        response = self._session.get(url, headers=headers, allow_redirects=False, verify=True)
+
+        if response.status_code == 302:
+            return response.headers.get("Location")
+
+        self._logger.warning(f"Failed to get downloadUrl para {filename} (status {response.status_code})")
+        return None
+
     def copy_file_stream(
         self,
         source_drive_id: str,
@@ -1331,18 +1344,24 @@ class SharePoint(object):
         # ------------------------------------------------------------------
         # 1. Get file metadata + direct download URL from source
         # ------------------------------------------------------------------
-        src_info_resp = self.get_file_info(drive_id=source_drive_id, filename=source_path)
-        if src_info_resp.status_code != 200:
-            self._logger.error(f"Failed to get source file info: {src_info_resp.status_code}")
-            return src_info_resp
+        # src_info_resp = self.get_file_info(drive_id=source_drive_id, filename=source_path)
+        # if src_info_resp.status_code != 200:
+        #     self._logger.error(f"Failed to get source file info: {src_info_resp.status_code}")
+        #     return src_info_resp
 
-        file_size = src_info_resp.content["size"]
+        # file_size = src_info_resp.content["size"]
         # download_url = src_info_resp.content.get("@microsoft.graph.downloadUrl")
-        download_url = src_info_resp.content.get("download_url")
+        # download_url = src_info_resp.content.get("download_url")
 
+        # if not download_url:
+        #     self._logger.error("Missing @microsoft.graph.downloadUrl in source file info")
+        #     return self.Response(status_code=400, content="downloadUrl not available")
+
+        download_url = self.get_download_url(source_drive_id, source_path)
         if not download_url:
-            self._logger.error("Missing @microsoft.graph.downloadUrl in source file info")
             return self.Response(status_code=400, content="downloadUrl not available")
+
+        file_size = self.get_file_info(source_drive_id, source_path).content["size"]
 
         # ------------------------------------------------------------------
         # 2. Prepare target path and create upload session
@@ -1411,199 +1430,6 @@ class SharePoint(object):
         # If we exit the loop without 200/201 something went wrong
         self._logger.error("Streaming copy ended unexpectedly without final success response")
         return self.Response(status_code=500, content="Copy interrupted unexpectedly")
-
-    def copy_file_stream_OLD(
-        self,
-        source_drive_id: str,
-        source_path: str,
-        target_drive_id: str,
-        target_path: str,
-        timeout: int = 3600,
-        new_name: Optional[str] = None,
-        save_as: Optional[str] = None,
-    ) -> Response:
-        """
-        Copy a file from one SharePoint drive to another using streaming.
-
-        This method transfers a file between two different document libraries (drives) without loading the entire file
-        into memory or saving it locally. It uses the Microsoft Graph API to create an upload session in the target
-        drive and streams the file from the source drive in chunks.
-
-        Parameters
-        ----------
-        source_drive_id : str
-            The ID of the source SharePoint drive (document library).
-        source_path : str
-            The full path of the file in the source drive, including the filename.
-        target_drive_id : str
-            The ID of the target SharePoint drive (document library).
-        target_path : str
-            The folder path in the target drive where the file will be uploaded.
-        timeout : int, optional
-            The timeout in seconds for HTTP requests. Default is 60 seconds.
-        new_name : str, optional
-            A new name for the file in the target drive. If None, the original name is retained.
-        save_as : str, optional
-            The file path to save the response in JSON format. If None, do not save the response.
-
-        Returns
-        -------
-        Response
-            A Response object containing the HTTP status code and a message indicating
-            the result of the copy operation.
-
-        Notes
-        -----
-        - This method uses an upload session to handle large files efficiently.
-        - The operation is performed in chunks to avoid memory overload.
-        - The Microsoft Graph API endpoints used:
-            - Create upload session: /createUploadSession
-            - Download file content: /content
-        """
-        self._logger.info(msg="Copying file between drives using streaming")
-
-        # Configuration
-        token = self._configuration.token
-        api_domain = self._configuration.api_domain
-        api_version = self._configuration.api_version
-
-        # 1. Get file info (size)
-        self._logger.info(msg="Getting source file information")
-        src_info = self.get_file_info(drive_id=source_drive_id, filename=source_path)
-
-        if src_info.status_code != 200:
-            return self.Response(status_code=src_info.status_code, content=None)
-
-        file_size = src_info.content["size"]  # already int
-
-        # Determine the file name for the target drive
-        file_name = new_name or source_path.split("/")[-1]
-        remote_path = f"{target_path.rstrip('/')}/{file_name}"
-        remote_path_quote = quote(remote_path, safe="/")  # preserve slashes
-
-        # 2. TARGET (UPLOAD) SESSION
-        self._logger.info(msg="Creating upload session in target drive")
-        # Request headers
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
-
-        # Endpoint to create an upload session in the target drive
-        target_url_query = rf"https://{api_domain}/{api_version}/drives/{target_drive_id}/root:/{remote_path_quote}:/createUploadSession"
-
-        # Request body
-        # fail or replace
-        body = {"item": {"@microsoft.graph.conflictBehavior": "replace"}}
-
-        # Send request
-        target_session = self._session.post(target_url_query, headers=headers, json=body, timeout=timeout)
-
-        if target_session.status_code not in (200, 201, 202):
-            # Log response code
-            self._logger.info(msg=f"HTTP Status Code (Target) {target_session.status_code}")
-            return self.Response(status_code=target_session.status_code, content=None)
-
-        # Session upload URL
-        upload_url_session = target_session.json()["uploadUrl"]
-
-        # 3. SOURCE (DOWNLOAD) SESSION
-        self._logger.info(msg="Creating download session in source drive")
-        # Request headers
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
-
-        # Endpoint to create an download session in the source drive
-        quote_source_path = quote(string=source_path, safe="/")  # preserve slashes
-        source_url_query = rf"https://{api_domain}/{api_version}/drives/{source_drive_id}/root:/{quote_source_path}:/content"
-
-        # Send request
-        source_response = self._session.get(source_url_query, headers=headers, stream=True, timeout=timeout)
-
-        if source_response.status_code not in (200, 201, 202):
-            # Log response code
-            self._logger.info(msg=f"HTTP Status Code (Source) {source_response.status_code}")
-            return self.Response(status_code=source_response.status_code, content=None)
-
-        # 4. STREAMING UPLOAD
-        self._logger.info(msg="Starting file streaming upload to target drive")
-        chunk_size = 10 * 1024 * 1024  # 10 MB
-        start = 0
-        last_response = requests.Response()
-
-        if total_size == 0:
-            headers_empty = {
-                "Content-Length": "0",
-                "Content-Range": f"bytes */{total_size}",
-            }
-
-            put_response = requests.put(
-                upload_url_session,
-                headers=headers_empty,
-                data=b"",  # corpo vazio
-                timeout=timeout
-            )
-
-            # Get last response
-            last_response = put_response
-
-            if put_response.status_code not in (200, 201, 202):
-                # Log response code
-                self._logger.info(msg=f"HTTP Status Code (0) {put_response.status_code}")
-                return self.Response(status_code=put_response.status_code, content=None)
-
-        else:
-            for chunk in source_response.iter_content(chunk_size=chunk_size):
-                end = start + len(chunk) - 1
-
-                # Dynamic headers for each chunk
-                headers_chunk = {
-                    "Content-Range": f"bytes {start}-{end}/{str(total_size)}",
-                    "Content-Type": "application/octet-stream",
-                    "Content-Length": str(len(chunk)),
-                }
-
-                # Send request
-                # put_response = self._session.put(
-                put_response = requests.put(
-                    upload_url_session,
-                    headers=headers_chunk,
-                    data=chunk,
-                    timeout=timeout,
-                )
-
-                # Get last response
-                last_response = put_response
-
-                if put_response.status_code not in (200, 201, 202):
-                    # Log response code
-                    self._logger.info(msg=f"HTTP Status Code (CHUNK) {put_response.status_code}")
-                    return self.Response(status_code=put_response.status_code, content=None)
-
-                start = end + 1
-
-        # Close stream
-        source_response.close()
-
-        # Log response code
-        self._logger.info(msg=f"HTTP Status Code (FINAL) {last_response.status_code}")
-
-        # Output
-        content = None
-        if last_response and last_response.status_code in (200, 201, 202):
-            self._logger.info(msg="Request successful")
-
-            # Export response to json file
-            self._export_to_json(content=last_response.content, save_as=save_as)
-
-            # Deserialize json (scalar values)
-            content = self._handle_response(response=last_response, model=CopyFileStream, rtype="scalar")
-
-        return self.Response(status_code=last_response.status_code, content=content)
 
     def move_file(
         self, drive_id: str,
