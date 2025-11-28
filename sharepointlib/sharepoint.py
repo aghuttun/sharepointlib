@@ -1014,6 +1014,8 @@ class SharePoint(object):
         # Query parameters
         # Pydantic v1
         alias_list = [field.alias for field in GetFileInfo.__fields__.values() if field.field_info.alias is not None]
+        if "@microsoft.graph.downloadUrl" not in alias_list:
+            alias_list.append("@microsoft.graph.downloadUrl")
         params = {"$select": ",".join(alias_list)}
 
         # Send request
@@ -1335,7 +1337,8 @@ class SharePoint(object):
             return src_info_resp
 
         file_size = src_info_resp.content["size"]
-        download_url = src_info_resp.content.get("@microsoft.graph.downloadUrl")
+        # download_url = src_info_resp.content.get("@microsoft.graph.downloadUrl")
+        download_url = src_info_resp.content.get("download_url")
 
         if not download_url:
             self._logger.error("Missing @microsoft.graph.downloadUrl in source file info")

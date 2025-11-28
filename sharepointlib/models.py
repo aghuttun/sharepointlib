@@ -299,6 +299,7 @@ class GetFileInfo(BaseModel):
     last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
     last_modified_by: dict = Field(None, alias="lastModifiedBy")
     last_modified_by_email: Optional[str] = None
+    download_url: Optional[str] = Field(None, alias="@microsoft.graph.downloadUrl")
 
     @validator("last_modified_by_email", pre=True, always=True)
     def set_last_modified_by_email(cls, v, values):
@@ -308,6 +309,11 @@ class GetFileInfo(BaseModel):
         if (last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]):
             return last_modified_by["user"]["email"]
         return None
+
+    class Config:
+        """Allow to use .download_url even if the field name has special characters."""
+        allow_population_by_field_name = True
+        extra = "ignore"
 
     # Exclude last_modified_by from dict() method
     def dict(self, *args, **kwargs):
