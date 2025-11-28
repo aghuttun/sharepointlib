@@ -1314,6 +1314,7 @@ class SharePoint(object):
         api_version = self._configuration.api_version
 
         # 1. Get file info (size)
+        self._logger.info(msg="Getting source file information")
         src_info = self.get_file_info(drive_id=source_drive_id, filename=source_path)
 
         if src_info.status_code != 200:
@@ -1327,6 +1328,7 @@ class SharePoint(object):
         remote_path_quote = quote(remote_path, safe="/")  # preserve slashes
 
         # 2. TARGET (UPLOAD) SESSION
+        self._logger.info(msg="Creating upload session in target drive")
         # Request headers
         headers = {
             "Authorization": f"Bearer {token}",
@@ -1344,7 +1346,7 @@ class SharePoint(object):
         # Send request
         target_session = self._session.post(target_url_query, headers=headers, json=body, timeout=timeout)
 
-        if target_session.status_code != 200:
+        if target_session.status_code not in (200, 201, 202):
             # Log response code
             self._logger.info(msg=f"HTTP Status Code (Target) {target_session.status_code}")
             return self.Response(status_code=target_session.status_code, content=None)
@@ -1353,6 +1355,7 @@ class SharePoint(object):
         upload_url_session = target_session.json()["uploadUrl"]
 
         # 3. SOURCE (DOWNLOAD) SESSION
+        self._logger.info(msg="Creating download session in source drive")
         # Request headers
         headers = {
             "Authorization": f"Bearer {token}",
@@ -1367,12 +1370,13 @@ class SharePoint(object):
         # Send request
         source_response = self._session.get(source_url_query, headers=headers, stream=True, timeout=timeout)
 
-        if source_response.status_code != 200:
+        if source_response.status_code not in (200, 201, 202):
             # Log response code
             self._logger.info(msg=f"HTTP Status Code (Source) {source_response.status_code}")
             return self.Response(status_code=source_response.status_code, content=None)
 
         # 4. STREAMING UPLOAD
+        self._logger.info(msg="Starting file streaming upload to target drive")
         chunk_size = 10 * 1024 * 1024  # 10 MB
         start = 0
         last_response = requests.Response()
@@ -1395,7 +1399,7 @@ class SharePoint(object):
 
             if put_response.status_code not in (200, 201, 202):
                 # Log response code
-                self._logger.info(msg=f"HTTP Status Code {put_response.status_code}")
+                self._logger.info(msg=f"HTTP Status Code (0) {put_response.status_code}")
                 return self.Response(status_code=put_response.status_code, content=None)
 
         else:
@@ -1423,7 +1427,7 @@ class SharePoint(object):
 
                 if put_response.status_code not in (200, 201, 202):
                     # Log response code
-                    self._logger.info(msg=f"HTTP Status Code {put_response.status_code}")
+                    self._logger.info(msg=f"HTTP Status Code (CHUNK) {put_response.status_code}")
                     return self.Response(status_code=put_response.status_code, content=None)
 
                 start = end + 1
@@ -1432,7 +1436,7 @@ class SharePoint(object):
         source_response.close()
 
         # Log response code
-        self._logger.info(msg=f"HTTP Status Code {last_response.status_code}")
+        self._logger.info(msg=f"HTTP Status Code (FINAL) {last_response.status_code}")
 
         # Output
         content = None

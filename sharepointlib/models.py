@@ -393,11 +393,11 @@ class CopyFileStream(BaseModel):
         Specify the last modification date and time of the SharePoint file.
     """
 
-    id: str = Field(alias="id")
-    name: str = Field(alias="name")
+    id: str = Field(None, alias="id")
+    name: str = Field(None, alias="name")
     web_url: str = Field(None, alias="webUrl")
     size: int = Field(None, alias="size")
-    created_date_time: datetime = Field(alias="createdDateTime")
+    created_date_time: datetime = Field(None, alias="createdDateTime")
     last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
 
 
