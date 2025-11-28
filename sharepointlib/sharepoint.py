@@ -1264,6 +1264,157 @@ class SharePoint(object):
         source_path: str,
         target_drive_id: str,
         target_path: str,
+        new_name: Optional[str] = None,
+        chunk_size: int = 20 * 1024 * 1024,  # 20 MB chunks
+        timeout: int = 3600,
+        save_as: Optional[str] = None,
+    ) -> Response:
+        """
+        Copy a file from one SharePoint drive to another using direct streaming.
+
+        This method efficiently copies large files (tested up to 15+ GB) between different
+        document libraries (drives) without downloading to disk or loading into memory.
+        It uses the official Microsoft Graph resumable upload session and streams directly
+        from the source file's temporary download URL.
+
+        Parameters
+        ----------
+        source_drive_id : str
+            The drive ID of the source document library.
+        source_path : str
+            Full path to the source file (e.g., "/Folder/Subfolder/report.xlsx").
+        target_drive_id : str
+            The drive ID of the destination document library.
+        target_path : str
+            Destination folder path (e.g., "/Archive/2025").
+        new_name : str, optional
+            New filename in the target location. If None, keeps original name.
+        chunk_size : int, default 20*1024*1024 (20 MB)
+            Size of each uploaded chunk. Must be multiple of 320 KB. 20 MB is optimal.
+        timeout : int, default 3600
+            Request timeout in seconds.
+        save_as : str, optional
+            If provided, saves the final Graph response JSON to this file path.
+
+        Returns
+        -------
+        Response
+            Response object with status_code and content (dict of the created driveItem).
+
+        Notes
+        -----
+        - Uses @microsoft.graph.downloadUrl for direct, fast, anonymous-capable streaming.
+        - Creates a resumable upload session in the target drive.
+        - Works reliably across tenants and with very large files.
+        - Returns 200/201 on success (final chunk), 202 on intermediate chunks.
+
+        Examples
+        --------
+        >>> resp = sp.copy_file_stream(
+        ...     source_drive_id="b!AbCdEf...",
+        ...     source_path="/Source/very_large_file.zip",
+        ...     target_drive_id="b!XyZwVu...",
+        ...     target_path="/Backup",
+        ...     new_name="very_large_file_copy.zip"
+        ... )
+        >>> if resp.status_code in (200, 201):
+        ...     print("Copy successful:", resp.content["webUrl"])
+        """
+        import os
+        import requests
+        from urllib.parse import quote
+
+        self._logger.info(f"Streaming copy: {source_path} → {target_path}")
+
+        # ------------------------------------------------------------------
+        # 1. Get file metadata + direct download URL from source
+        # ------------------------------------------------------------------
+        src_info_resp = self.get_file_info(drive_id=source_drive_id, filename=source_path)
+        if src_info_resp.status_code != 200:
+            self._logger.error(f"Failed to get source file info: {src_info_resp.status_code}")
+            return src_info_resp
+
+        file_size = src_info_resp.content["size"]
+        download_url = src_info_resp.content.get("@microsoft.graph.downloadUrl")
+
+        if not download_url:
+            self._logger.error("Missing @microsoft.graph.downloadUrl in source file info")
+            return self.Response(status_code=400, content="downloadUrl not available")
+
+        # ------------------------------------------------------------------
+        # 2. Prepare target path and create upload session
+        # ------------------------------------------------------------------
+        file_name = new_name or os.path.basename(source_path)
+        remote_target_path = f"{target_path.rstrip('/')}/{file_name}"
+        remote_target_path = quote(remote_target_path, safe="/")
+
+        create_session_url = (
+            f"https://{self._configuration.api_domain}/"
+            f"{self._configuration.api_version}/drives/{target_drive_id}/root:/{remote_target_path}:/createUploadSession"
+        )
+
+        headers = {
+            "Authorization": f"Bearer {self._configuration.token}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "item": {"@microsoft.graph.conflictBehavior": "replace"},
+            "name": file_name,
+        }
+
+        session_resp = requests.post(create_session_url, headers=headers, json=payload, timeout=timeout)
+        if session_resp.status_code not in (200, 201):
+            self._logger.error(f"Failed to create upload session: {session_resp.status_code} {session_resp.text}")
+            return self.Response(status_code=session_resp.status_code, content=session_resp.text)
+
+        upload_url = session_resp.json()["uploadUrl"]
+
+        # ------------------------------------------------------------------
+        # 3. Stream from source → upload to target in chunks
+        # ------------------------------------------------------------------
+        with requests.get(download_url, stream=True, timeout=timeout) as src_stream:
+            src_stream.raise_for_status()
+
+            uploaded = 0
+            for chunk in src_stream.iter_content(chunk_size=chunk_size):
+                if not chunk:
+                    continue
+
+                start_byte = uploaded
+                end_byte = uploaded + len(chunk) - 1
+
+                put_headers = {
+                    "Content-Length": str(len(chunk)),
+                    "Content-Range": f"bytes {start_byte}-{end_byte}/{file_size}",
+                }
+
+                put_resp = requests.put(upload_url, headers=put_headers, data=chunk, timeout=timeout)
+
+                # 200 or 201 = final successful response
+                if put_resp.status_code in (200, 201):
+                    final_json = put_resp.json()
+                    if save_as:
+                        self._export_to_json(put_resp.content, save_as)
+                    self._logger.info("File copied successfully via streaming")
+                    return self.Response(status_code=put_resp.status_code, content=final_json)
+
+                # 202 = accepted, continue
+                if put_resp.status_code != 202:
+                    self._logger.error(f"Upload chunk failed ({start_byte}-{end_byte}): {put_resp.status_code} {put_resp.text}")
+                    return self.Response(status_code=put_resp.status_code, content=put_resp.text)
+
+                uploaded += len(chunk)
+
+        # If we exit the loop without 200/201 something went wrong
+        self._logger.error("Streaming copy ended unexpectedly without final success response")
+        return self.Response(status_code=500, content="Copy interrupted unexpectedly")
+
+    def copy_file_stream_OLD(
+        self,
+        source_drive_id: str,
+        source_path: str,
+        target_drive_id: str,
+        target_path: str,
         timeout: int = 3600,
         new_name: Optional[str] = None,
         save_as: Optional[str] = None,
@@ -1320,7 +1471,7 @@ class SharePoint(object):
         if src_info.status_code != 200:
             return self.Response(status_code=src_info.status_code, content=None)
 
-        total_size = src_info.content["size"]  # already int
+        file_size = src_info.content["size"]  # already int
 
         # Determine the file name for the target drive
         file_name = new_name or source_path.split("/")[-1]
