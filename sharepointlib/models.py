@@ -194,18 +194,14 @@ class ListDir(BaseModel):
     @validator("last_modified_by_name", pre=True, always=True)
     def set_last_modified_by_name(cls, v, values):
         last_modified_by = values.get("last_modified_by")
-        if (
-            last_modified_by
-            and "user" in last_modified_by
-            and "displayName" in last_modified_by["user"]
-        ):
+        if last_modified_by and "user" in last_modified_by and "displayName" in last_modified_by["user"]:
             return last_modified_by["user"]["displayName"]
         return None
 
     @validator("last_modified_by_email", pre=True, always=True)
     def set_last_modified_by_email(cls, v, values):
         last_modified_by = values.get("last_modified_by")
-        if (last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]):
+        if last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]:
             return last_modified_by["user"]["email"]
         return None
 
@@ -274,38 +270,61 @@ class GetFileInfo(BaseModel):
     Parameters
     ----------
     id : str
-        Specify the unique identifier of the SharePoint file.
+        Specify the unique identifier of the file.
     name : str
-        Specify the name of the SharePoint file.
+        Specify the name of the file.
+    extension : str, optional
+        Specify the file extension of the file.
     web_url : str, optional
-        Specify the web URL of the SharePoint file.
+        Specify the web URL of the file.
     size : int, optional
-        Specify the size of the SharePoint file in bytes.
+        Specify the size of the file in bytes.
+    path : str, optional
+        Specify the path of the file.
     created_date_time : datetime
-        Specify the creation date and time of the SharePoint file.
+        Specify the creation date and time of the file.
     last_modified_date_time : datetime, optional
-        Specify the last modification date and time of the SharePoint file.
+        Specify the last modification date and time of the file.
     last_modified_by : dict, optional
         Specify metadata about the user who last modified the file.
+    last_modified_by_name : str, optional
+        Specify the display name of the user who last modified the item.
     last_modified_by_email : str, optional
         Specify the email of the user who last modified the file.
     """
 
     id: str = Field(alias="id")
     name: str = Field(alias="name")
-    web_url: str = Field(None, alias="webUrl")
+    extension: Optional[str] = None
     size: int = Field(None, alias="size")
+    path: Optional[str] = None
+    web_url: str = Field(None, alias="webUrl")
     created_date_time: datetime = Field(alias="createdDateTime")
     last_modified_date_time: datetime = Field(None, alias="lastModifiedDateTime")
     last_modified_by: dict = Field(None, alias="lastModifiedBy")
+    last_modified_by_name: Optional[str] = None
     last_modified_by_email: Optional[str] = None
+
+    @validator("extension", pre=True, always=True)
+    def set_extension(cls, v, values):
+        if values.get("folder") is None:
+            return values["name"].split(".")[-1] if "." in values["name"] else None
+        return None
+
+    @validator("last_modified_by_name", pre=True, always=True)
+    def set_last_modified_by_name(cls, v, values):
+        """Get last modified name."""
+        last_modified_by = values.get("last_modified_by")
+        if last_modified_by and "user" in last_modified_by and "displayName" in last_modified_by["user"]:
+            return last_modified_by["user"]["displayName"]
+        return None
 
     @validator("last_modified_by_email", pre=True, always=True)
     def set_last_modified_by_email(cls, v, values):
         """Get last modified email."""
         # Handle cases where lastModifiedBy or user.email is missing
         last_modified_by = values.get("last_modified_by")
-        if (last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]):
+        if last_modified_by and "user" in last_modified_by and "email" in last_modified_by["user"]:
             return last_modified_by["user"]["email"]
         return None
 

@@ -21,13 +21,13 @@ Intended for use as a utility library in broader data engineering and automation
 import dataclasses
 import json
 import logging
-from typing import Any, Optional, Type
+from typing import Any, cast, Optional, Type
 import re
 from urllib.parse import quote
 import requests
 
 # TypeAdapter v2 vs parse_obj_as v1
-from pydantic import BaseModel, parse_obj_as  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, parse_obj_as
 from .models import (
     GetSiteInfo,
     GetHostNameInfo,
@@ -1034,6 +1034,10 @@ class SharePoint(object):
             # Deserialize json (scalar values)
             content = self._handle_response(response=response, model=GetFileInfo, rtype="scalar")
 
+            # Add path to the item
+            content = cast(dict[str, Any], content)
+            content["path"] = filename.rsplit(sep="/", maxsplit=1)[0] if "/" in filename else "/"
+
         return self.Response(status_code=response.status_code, content=content)
 
     def check_out_file(self, drive_id: str, filename: str) -> Response:
@@ -1336,7 +1340,6 @@ class SharePoint(object):
         ...     print("Copy successful:", resp.content["webUrl"])
         """
         import os
-        import requests
         from urllib.parse import quote
 
         self._logger.info(f"Streaming copy: {source_path} → {target_path}")
