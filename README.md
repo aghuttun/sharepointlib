@@ -22,8 +22,8 @@ import sharepointlib
 import pandas as pd
 
 client_id = "123..."
-tenant_id = "456..."
 client_secret = "xxxx"
+tenant_id = "456..."
 sp_domain = "companygroup.sharepoint.com"
 
 sp_site_name = "My Site"
@@ -332,7 +332,7 @@ if response.status_code in (200, 201):
 
 ```python
 # Close
-del(sharepoint)
+del sharepoint
 ```
 
 ## Installation
