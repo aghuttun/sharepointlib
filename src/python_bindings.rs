@@ -369,7 +369,7 @@ impl PySharePoint {
         py_response_from(response)
     }
 
-    #[pyo3(signature = (py, site_id, list_id, item, save_as=None))]
+    #[pyo3(signature = (site_id, list_id, item, save_as=None))]
     fn add_list_item(
         &self,
         py: Python<'_>,

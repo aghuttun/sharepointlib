@@ -381,11 +381,21 @@ impl SharePoint {
                         None
                     };
 
-                    let last_modified = obj
+                    let last_modified_name = obj
                         .get("lastModifiedBy")
                         .and_then(Value::as_object)
                         .and_then(|it| it.get("user"))
-                        .and_then(Value::as_object);
+                        .and_then(Value::as_object)
+                        .and_then(|user| user.get("displayName"))
+                        .cloned();
+
+                    let last_modified_email = obj
+                        .get("lastModifiedBy")
+                        .and_then(Value::as_object)
+                        .and_then(|it| it.get("user"))
+                        .and_then(Value::as_object)
+                        .and_then(|user| user.get("email"))
+                        .cloned();
 
                     let path_value = path.unwrap_or("/").to_string();
                     let alias_value = match &alias_regex {
@@ -402,13 +412,11 @@ impl SharePoint {
                         obj.insert("extension".to_string(), Value::Null);
                     }
 
-                    if let Some(user) = last_modified {
-                        if let Some(display_name) = user.get("displayName") {
-                            obj.insert("last_modified_by_name".to_string(), display_name.clone());
-                        }
-                        if let Some(email) = user.get("email") {
-                            obj.insert("last_modified_by_email".to_string(), email.clone());
-                        }
+                    if let Some(display_name) = last_modified_name {
+                        obj.insert("last_modified_by_name".to_string(), display_name);
+                    }
+                    if let Some(email) = last_modified_email {
+                        obj.insert("last_modified_by_email".to_string(), email);
                     }
                 }
             }
@@ -1175,20 +1183,29 @@ fn enrich_object(map: &mut Map<String, Value>) {
         );
     }
 
-    if let Some(last_modified_by) = map
+    let last_modified_name = map
         .get("lastModifiedBy")
         .and_then(Value::as_object)
         .and_then(|v| v.get("user"))
         .and_then(Value::as_object)
-    {
-        if let Some(display_name) = last_modified_by.get("displayName") {
-            map.entry("last_modified_by_name".to_string())
-                .or_insert_with(|| display_name.clone());
-        }
+        .and_then(|user| user.get("displayName"))
+        .cloned();
 
-        if let Some(email) = last_modified_by.get("email") {
-            map.entry("last_modified_by_email".to_string())
-                .or_insert_with(|| email.clone());
-        }
+    let last_modified_email = map
+        .get("lastModifiedBy")
+        .and_then(Value::as_object)
+        .and_then(|v| v.get("user"))
+        .and_then(Value::as_object)
+        .and_then(|user| user.get("email"))
+        .cloned();
+
+    if let Some(display_name) = last_modified_name {
+        map.entry("last_modified_by_name".to_string())
+            .or_insert(display_name);
+    }
+
+    if let Some(email) = last_modified_email {
+        map.entry("last_modified_by_email".to_string())
+            .or_insert(email);
     }
 }
