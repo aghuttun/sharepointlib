@@ -1,372 +1,117 @@
 # sharepointlib
 
-- [Description](#package-description)
-- [Usage](#usage)
+Microsoft SharePoint client package for Python powered by Rust.
+
 - [Installation](#installation)
-- [Docstring](#docstring)
-- [License](#license)
-
-## Package Description
-
-Microsoft SharePoint client Python package that uses the [requests](https://pypi.org/project/requests/) library.
-
-> [!IMPORTANT]  
-> This packages uses pydantic v1!
-
-## Usage
-
-From a script:
-
-```python
-import sharepointlib
-import pandas as pd
-
-client_id = "123..."
-client_secret = "xxxx"
-tenant_id = "456..."
-sp_domain = "companygroup.sharepoint.com"
-
-sp_site_name = "My Site"
-sp_site_id = "companygroup.sharepoint.com,1233124124"
-sp_site_drive_id = "b!1234567890"
-
-# 0. Initialize SharePoint client
-sharepoint = sharepointlib.SharePoint(
-    client_id=client_id,
-    tenant_id=tenant_id,
-    client_secret=client_secret,
-    sp_domain=sp_domain,
-)
-```
-
-```python
-# 1. Gets the site ID for a given site name
-response = sharepoint.get_site_info(name=sp_site_name)
-
-if response.status_code == 200:
-    print(response.content["id"])
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 2. Gets the hostname and site details for a specified site ID
-response = sharepoint.get_hostname_info(site_id=sp_site_id)
-
-if response.status_code == 200:
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-Drives:
-
-```python
-# 3. Gets a list of the Drive IDs for a given site ID
-response = sharepoint.list_drives(site_id=sp_site_id)
-
-if response.status_code == 200:
-    df = pd.DataFrame(response.content)
-    display(df)
-```
-
-```python
-# 4. Gets the folder ID for a specified folder within a drive ID
-response = sharepoint.get_dir_info(
-    drive_id=sp_site_drive_id,
-    path="Sellout/Support"
-)
-
-if response.status_code == 200:
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 5.1. List content (files and folders) of a specific folder
-response = sharepoint.list_dir(
-    drive_id=sp_site_drive_id,
-    path="Sellout/Support"
-)
-
-if response.status_code == 200:
-    df = pd.DataFrame(response.content)
-    display(df)
-```
-
-```python
-# 5.2. List content (files and folders) of a specific folder changing the filename
-#
-# The "alias" column allows simplifying the value of the "name" column using regular expressions.
-# Example: column name: My_Filename_20251107.xlsx –> alias parameter: r"_\d{8}" –> alias column: My_Filename.xlsx.
-#
-# If the alias is set to None, then the regular expression r"$^" is used; which means the alias column will be identical
-# to the name column - in other words, the value of the "alias" column will be the same as that of the "name" column.
-response = sharepoint.list_dir(
-    drive_id=sp_site_drive_id,
-    path="Sellout/Support",
-    alias=r"_\d{8}",
-)
-
-if response.status_code == 200:
-    df = pd.DataFrame(response.content)
-    display(df)
-```
-
-```python
-# 6.1. Creates a new folder in a specified drive ID
-response = sharepoint.create_dir(
-    drive_id=sp_site_drive_id,
-    path="Sellout/Support",
-    name="Archive"
-)
-
-if response.status_code in (200, 201):
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 6.2. Creates a new folder in a specified drive ID
-response = sharepoint.create_dir(
-    drive_id=sp_site_drive_id,
-    path="Sellout/Support",
-    name="Test",
-)
-
-if response.status_code in (200, 201):
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 7. Deletes a folder from a specified drive ID
-response = sharepoint.delete_dir(
-    drive_id=sp_site_drive_id,
-    path="Sellout/Support/Test",
-)
-
-if response.status_code in (200, 204):
-    print("Folder deleted successfully")
-```
-
-```python
-# 8. Renames a folder in a specified drive ID
-response = sharepoint.rename_folder(
-    drive_id=sp_site_drive_id,
-    path="Sellout/Support",
-    new_name="Old",
-)
-
-if response.status_code == 200:
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 9. Retrieves information about a specific file in a drive ID
-response = sharepoint.get_file_info(
-    drive_id=sp_site_drive_id,
-    filename="Sellout/Support/Sellout.xlsx"
-)
-
-if response.status_code in (200, 202):
-    print(response.content["id"])
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 10. Perform check-out of a file
-response = sharepoint.check_out_file(
-    drive_id=sp_site_drive_id,
-    filename="Sellout/Support/Sellout.xlsx",
-)
-
-if response.status_code in (200, 204):
-    print("Check-out completed successfully")
-```
-
-```python
-# 11. Perform check-in of a file
-response = sharepoint.check_in_file(
-    drive_id=sp_site_drive_id,
-    filename="Sellout/Support/Sellout.xlsx",
-    comment="Reviewed and approved",
-)
-
-if response.status_code in (200, 204):
-    print("Check-in completed successfully")
-```
-
-```python
-# 12. Copy a file from one folder to another within the same drive ID
-response = sharepoint.copy_file(
-    drive_id=sp_site_drive_id,
-    filename="Sellout/Support/Archive/My Book.xlsx",
-    target_path="Sellout/Support/",
-    new_name="My Book Copy.xlsx",
-)
-
-if response.status_code in (200, 202):
-    print("File copied successfully")
-```
-
-```python
-# 12.2. UNDER DEVELOPMENT
-# Copy a file from one drive/site to another (cross-drive copy)
-# Copies a file from one drive (or site) to another drive/site – even across 
-# different sites!
-# This is the ONLY reliable method to copy files BETWEEN different document 
-# libraries/drives
-# Works efficiently with files of any size (0 bytes → several GB) using streaming
-response = sharepoint.copy_file_stream(
-    source_drive_id="b!ABC123...",
-    source_path="Sellout/2024/Sellout_November.xlsx",
-    target_drive_id="b!XYZ987...",
-    target_path="Archive/2024",
-    new_name="Sellout_November_2024_Backup.xlsx",
-    timeout=7200
-)
-
-if response.status_code in (200, 201):
-    print("File copied successfully between drives!")
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 13. Moves a file from one folder to another within the same drive ID
-response = sharepoint.move_file(
-    drive_id=sp_site_drive_id,
-    filename="Sellout/Support/My Book Copy.xlsx",
-    target_path="Sellout/Support/Archive/",
-    new_name="My New Book.xlsx",
-)
-
-if response.status_code == 200:
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 14. Deletes a file from a specified drive ID
-response = sharepoint.delete_file(
-    drive_id=sp_site_drive_id,
-    filename="Sellout/Support/My New Book.xlsx",
-)
-
-if response.status_code in (200, 204):
-    print("File deleted successfully")
-```
-
-```python
-# 15. Renames a file in a specified drive ID
-response = sharepoint.rename_file(
-    drive_id=sp_site_drive_id,
-    filename="Sellout/Support/Archive/Sellout.xlsx",
-    new_name="Sellout_New_Name.xlsx",
-)
-
-if response.status_code == 200:
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# 16.1. Downloads a file from a specified remote path in a drive ID to a local path
-# Examples for local_path (databricks):
-#   local_path=r"/Workspace/Users/admin@admin.com/Sellout.xlsm"
-#   local_path=r"/Volumes/lakehouse/sadp/Sellout.xlsm"
-response = sharepoint.download_file(
-    drive_id=sp_site_drive_id,
-    remote_path=r"Sellout/Support/Sellout.xlsx",
-    local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",
-)
-if response.status_code == 200:
-    print("File downloaded successfully")
-```
-
-```python
-# 16.2. Downloads an Excel file from SharePoint directly into memory and loads it into a Pandas DataFrame
-from io import BytesIO
-
-response = sharepoint.download_file_to_memory(
-    drive_id=sp_site_drive_id,
-    remote_path="Sellout/Support/Sellout.xlsx",
-)
-
-if response.status_code == 200 and response.content is not None:
-    excel_data = BytesIO(response.content)
-    df = pd.read_excel(excel_data)
-    display(df)
-```
-
-```python
-# 17. Downloads all files from a specified remote path in a drive ID to a local path
-# Examples for local_path (databricks):
-#   local_path=r"/Workspace/Users/admin@admin.com/"
-#   local_path=r"/Volumes/lakehouse/sadp/"
-response = sharepoint.download_all_files(
-    drive_id=sp_site_drive_id,
-    remote_path=r"Sellout/Support",
-    local_path=r"C:\Users\admin\Downloads",
-)
-
-if response.status_code == 200:
-    df = pd.DataFrame(response.content)
-    display(df)
-```
-
-```python
-# 18. Uploads a file to a specified remote path in a SharePoint drive ID
-response = sharepoint.upload_file(
-    drive_id=sp_site_drive_id,
-    local_path=r"C:\Users\admin\Downloads\Sellout.xlsx",
-    remote_path=r"Sellout/Support/Archive/Sellout.xlsx",
-)
-
-if response.status_code in (200, 201):
-    df = pd.DataFrame([response.content])
-    display(df)
-```
-
-```python
-# Close
-del sharepoint
-```
+- [Usage](#usage)
+- [Version](#version)
+- [Licence](#licence)
 
 ## Installation
-
-Install python and pip if you have not already.
-
-Then run:
-
-```bash
-pip install pip --upgrade
-```
-
-For production:
 
 ```bash
 pip install sharepointlib
 ```
 
-This will install the package and all of it's python dependencies.
+## Usage
 
-If you want to install the project for development:
+```python
+import sharepointlib
 
-```bash
-git clone https://github.com/aghuttun/sharepointlib.git
-cd sharepointlib
-pip install -e ".[dev]"
+sharepoint = sharepointlib.SharePoint(
+    client_id="<client-id>",
+    tenant_id="<tenant-id>",
+    client_secret="<client-secret>",
+    sp_domain="companygroup.sharepoint.com",
+)
 ```
 
-## Docstring
+```python
+# Site metadata
+response = sharepoint.get_site_info(name="My Site")
+if response.status_code == 200:
+    print(response.content)
+```
 
-The script's docstrings follow the numpydoc style.
+```python
+# Drives
+response = sharepoint.list_drives(site_id="companygroup.sharepoint.com,abc,def")
+if response.status_code == 200:
+    print(response.content)
+```
 
-## License
+```python
+# List a folder
+response = sharepoint.list_dir(
+    drive_id="b!123",
+    path="Sellout/Support",
+    alias=r"_\d{8}",
+)
+if response.status_code == 200:
+    print(response.content)
+```
 
-BSD License (see license file)
+```python
+# Download one file
+response = sharepoint.download_file(
+    drive_id="b!123",
+    remote_path="Sellout/Support/report.xlsx",
+    local_path=r"C:\\Temp\\report.xlsx",
+)
+print(response.status_code)
+```
 
-[top](#sharepointlib)
+```python
+# Download to memory (bytes)
+response = sharepoint.download_file_to_memory(
+    drive_id="b!123",
+    remote_path="Sellout/Support/report.xlsx",
+)
+if response.status_code == 200:
+    payload_bytes = response.content
+    print(len(payload_bytes))
+```
+
+```python
+# Copy across drives via streaming
+response = sharepoint.copy_file_stream(
+    source_drive_id="b!SRC",
+    source_path="Sellout/2024/Sellout_November.xlsx",
+    target_drive_id="b!DST",
+    target_path="Archive/2024",
+    new_name="Sellout_November_2024_Backup.xlsx",
+    timeout=7200,
+)
+print(response.status_code)
+```
+
+```python
+# SharePoint lists
+response = sharepoint.list_lists(site_id="companygroup.sharepoint.com,abc,def")
+if response.status_code == 200:
+    print(response.content)
+```
+
+For technical and contributor documentation, see [DEV.md](DEV.md).
+
+## Version
+
+Recommended way to read installed package version:
+
+```python
+from importlib.metadata import version
+
+print(version("sharepointlib"))
+```
+
+Convenience attribute:
+
+```python
+import sharepointlib
+
+print(sharepointlib.__version__)
+```
+
+## Licence
+
+BSD-3-Clause Licence (see [LICENSE](LICENSE))

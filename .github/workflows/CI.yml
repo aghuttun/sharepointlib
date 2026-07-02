@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      SHAREPOINTLIB_CLIENT_ID: ${{ secrets.SHAREPOINTLIB_CLIENT_ID }}
+      SHAREPOINTLIB_TENANT_ID: ${{ secrets.SHAREPOINTLIB_TENANT_ID }}
+      SHAREPOINTLIB_CLIENT_SECRET: ${{ secrets.SHAREPOINTLIB_CLIENT_SECRET }}
+      SHAREPOINTLIB_SP_DOMAIN: ${{ secrets.SHAREPOINTLIB_SP_DOMAIN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install tooling
+        run: python -m pip install --upgrade pip maturin pytest
+
+      - name: Clean old builds
+        run: |
+          rm -rf wheelhouse-test dist target 2>/dev/null || true
+        shell: bash
+
+      - name: Build wheel for tests
+        run: maturin build --release --features python --out wheelhouse-test
+
+      - name: Install built wheel
+        run: python -c 'import glob, subprocess, sys; wheels = glob.glob("wheelhouse-test/*.whl"); assert wheels, "No wheel found"; subprocess.check_call([sys.executable, "-m", "pip", "install", "--force-reinstall", *wheels])'
+
+      - name: Run Python smoke test
+        run: python -m pytest tests/test_smoke.py -q
+
+      - name: Run optional live SharePoint test
+        if: matrix.os == 'ubuntu-latest' && env.SHAREPOINTLIB_CLIENT_ID != '' && env.SHAREPOINTLIB_TENANT_ID != '' && env.SHAREPOINTLIB_CLIENT_SECRET != '' && env.SHAREPOINTLIB_SP_DOMAIN != ''
+        run: python -m pytest tests/test_live_sharepoint.py -q
+
+      - name: Run Rust tests
+        run: cargo test -q
+
+  build-wheel:
+    name: Build wheels (${{ matrix.os }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install maturin
+        run: python -m pip install --upgrade pip maturin
+
+      - name: Clean old builds
+        run: |
+          rm -rf wheelhouse 2>/dev/null || true
+        shell: bash
+
+      - name: Build wheel
+        run: maturin build --release --features python --out wheelhouse
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  build-sdist:
+    name: Build sdist
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install maturin
+        run: python -m pip install --upgrade pip maturin
+
+      - name: Build sdist
+        run: |
+          rm -rf sdisthouse 2>/dev/null || true
+          maturin sdist --out sdisthouse
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: sdisthouse/*.tar.gz
+
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-wheel, build-sdist]
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheel-*
+          merge-multiple: true
+          path: dist
+
+      - name: Download sdist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          password: ${{ secrets.PYPI_API_TOKEN }}
