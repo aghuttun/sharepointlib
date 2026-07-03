@@ -67,13 +67,21 @@ jobs:
         run: cargo test -q
 
   build-wheel:
-    name: Build wheels (${{ matrix.os }})
+    name: Build wheels (${{ matrix.os }}${{ matrix.target && format(', {0}', matrix.target) || '' }})
     needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            target: x86_64
+            manylinux: "2014"
+          - os: ubuntu-latest
+            target: aarch64
+            manylinux: "2014"
+          - os: windows-latest
+          - os: macos-latest
 
     steps:
       - name: Checkout
@@ -95,13 +103,22 @@ jobs:
           rm -rf wheelhouse 2>/dev/null || true
         shell: bash
 
-      - name: Build wheel
+      - name: Build wheel (Linux, manylinux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          args: --release --features python --out wheelhouse
+
+      - name: Build wheel (native)
+        if: matrix.os != 'ubuntu-latest'
         run: maturin build --release --features python --out wheelhouse
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.os }}
+          name: wheel-${{ matrix.os }}-${{ matrix.target || 'native' }}
           path: wheelhouse/*.whl
 
   build-sdist:
