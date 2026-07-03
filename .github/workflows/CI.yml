@@ -116,7 +116,7 @@ jobs:
 
       - name: Build wheel (Linux ARM64, native)
         if: matrix.os == 'linux' && matrix.target == 'aarch64-unknown-linux-gnu'
-        run: maturin build --release --features python --compatibility linux --out wheelhouse
+        run: maturin build --release --features python --compatibility manylinux_2_39 --out wheelhouse
 
       - name: Build wheel (native)
         if: matrix.os != 'linux'
