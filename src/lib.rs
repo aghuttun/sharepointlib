@@ -1127,6 +1127,29 @@ impl SharePoint {
             content,
         })
     }
+
+    pub fn update_list_item(
+        &self,
+        site_id: &str,
+        list_id: &str,
+        item_id: &str,
+        item: Value,
+        save_as: Option<impl AsRef<Path>>,
+    ) -> Result<Response, SharePointError> {
+        let endpoint = format!("sites/{site_id}/lists/{list_id}/items/{item_id}/fields");
+        let response = self.request(Method::PATCH, &endpoint, None, Some(&item))?;
+        let status = response.status().as_u16();
+        let content = if status == 200 {
+            self.parse_scalar_json(response, save_as)?
+        } else {
+            None
+        };
+
+        Ok(Response {
+            status_code: status,
+            content,
+        })
+    }
 }
 
 fn extract_id(content: &Option<ResponseContent>) -> Result<String, SharePointError> {

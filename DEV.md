@@ -121,6 +121,7 @@ Initialise the client and authenticate.
 - `list_list_items(site_id, list_id, fields, save_as=None)`
 - `delete_list_item(site_id, list_id, item_id)`
 - `add_list_item(site_id, list_id, item, save_as=None)`
+- `update_list_item(site_id, list_id, item_id, item, save_as=None)`
 
 ### Response Shape
 

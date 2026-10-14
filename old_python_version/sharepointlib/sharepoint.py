@@ -2324,4 +2324,73 @@ class SharePoint(object):
 
         return self.Response(status_code=response.status_code, content=content)
 
+    def update_list_item(
+        self, site_id: str, list_id: str, item_id: str, item: dict, save_as: Optional[str] = None
+    ) -> Response:
+        """
+        Update fields on an item in a SharePoint list.
+
+        Parameters
+        ----------
+        site_id : str
+            ID of the site containing the list.
+        list_id : str
+            ID of the list containing the item.
+        item_id : str
+            ID of the item to update.
+        item : dict
+            Fields and values to update on the item.
+        save_as : str, optional
+            File path to save the response in JSON format.
+
+        Returns
+        -------
+        Response
+            Response object containing the HTTP status code and updated fields.
+
+        Examples
+        --------
+        >>> resp = sp.update_list_item(
+        ...     site_id="companygroup.sharepoint.com,1111a11e-...,...-ed11bff1baf1",
+        ...     list_id="e11f111b-1111-11a1-1111-11f11d1a11f1",
+        ...     item_id="1",
+        ...     item={"Title": "Updated title"}
+        ... )
+        >>> print(resp.status_code)
+        >>> print(resp.content)
+        """
+        self._logger.info(msg="Updating an item in the specified list")
+        self._logger.info(msg=site_id)
+        self._logger.info(msg=list_id)
+        self._logger.info(msg=item_id)
+
+        # Configuration
+        api_domain = self._configuration.api_domain
+        api_version = self._configuration.api_version
+
+        # Request headers
+        headers = {
+            "Authorization": f"******",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        # Endpoint
+        url_query = rf"https://{api_domain}/{api_version}/sites/{site_id}/lists/{list_id}/items/{item_id}/fields"
+
+        # Send request
+        response = self._session.patch(url=url_query, headers=headers, json=item, verify=True)
+
+        # Log response code
+        self._logger.info(msg=f"HTTP Status Code {response.status_code}")
+
+        # Output
+        content = None
+        if response.status_code == 200:
+            self._logger.info(msg="Request successful")
+            self._export_to_json(content=response.content, save_as=save_as)
+            content = response.json()
+
+        return self.Response(status_code=response.status_code, content=content)
+
 # eof

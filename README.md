@@ -26,6 +26,8 @@ sharepoint = sharepointlib.SharePoint(
 )
 ```
 
+### Authentication and sites
+
 ```python
 # Force token refresh (for long-running sessions)
 sharepoint.renew_token()
@@ -33,7 +35,14 @@ sharepoint.renew_token()
 
 ```python
 # Site metadata
-response = sharepoint.get_site_info(name="My Site")
+response = sharepoint.get_site_info(name="My Site", save_as="site_info.json")
+if response.status_code == 200:
+    print(response.content)
+```
+
+```python
+# Resolve hostname details from a site ID
+response = sharepoint.get_hostname_info(site_id="companygroup.sharepoint.com,abc,def")
 if response.status_code == 200:
     print(response.content)
 ```
@@ -44,6 +53,8 @@ response = sharepoint.list_drives(site_id="companygroup.sharepoint.com,abc,def")
 if response.status_code == 200:
     print(response.content)
 ```
+
+### Drives and files
 
 ```python
 # List a folder
@@ -88,20 +99,6 @@ response = sharepoint.copy_file_stream(
     timeout=7200,
 )
 print(response.status_code)
-```
-
-```python
-# SharePoint lists
-response = sharepoint.list_lists(site_id="companygroup.sharepoint.com,abc,def")
-if response.status_code == 200:
-    print(response.content)
-```
-
-```python
-# Resolve hostname details from a site ID
-response = sharepoint.get_hostname_info(site_id="companygroup.sharepoint.com,abc,def")
-if response.status_code == 200:
-    print(response.content)
 ```
 
 ```python
@@ -216,6 +213,15 @@ response = sharepoint.download_all_files(
 print(response.status_code)
 ```
 
+### SharePoint lists
+
+```python
+# SharePoint lists
+response = sharepoint.list_lists(site_id="companygroup.sharepoint.com,abc,def")
+if response.status_code == 200:
+    print(response.content)
+```
+
 ```python
 # List list columns
 response = sharepoint.list_list_columns(
@@ -238,11 +244,18 @@ if response.status_code == 200:
 ```
 
 ```python
-# Add and delete a list item
+# Add, update, and delete a list item
 created = sharepoint.add_list_item(
     site_id="companygroup.sharepoint.com,abc,def",
     list_id="1234-5678-90ab-cdef",
     item={"Title": "New task", "Status": "Open"},
+)
+
+updated = sharepoint.update_list_item(
+    site_id="companygroup.sharepoint.com,abc,def",
+    list_id="1234-5678-90ab-cdef",
+    item_id="42",
+    item={"Status": "In progress"},
 )
 
 deleted = sharepoint.delete_list_item(
@@ -251,8 +264,12 @@ deleted = sharepoint.delete_list_item(
     item_id="42",
 )
 
-print(created.status_code, deleted.status_code)
+print(created.status_code, updated.status_code, deleted.status_code)
 ```
+
+Methods that return a `Response` expose `status_code` (the HTTP status code) and
+`content` (the decoded payload: a `dict`, `list`, `bytes`, or `None`). Methods raise
+`RuntimeError` when a Rust operation fails.
 
 For technical and contributor documentation, see [DEV.md](DEV.md).
 

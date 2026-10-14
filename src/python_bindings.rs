@@ -385,6 +385,30 @@ impl PySharePoint {
             .map_err(into_pyerr)?;
         py_response_from(response)
     }
+
+    #[pyo3(signature = (site_id, list_id, item_id, item, save_as=None))]
+    fn update_list_item(
+        &self,
+        py: Python<'_>,
+        site_id: String,
+        list_id: String,
+        item_id: String,
+        item: &Bound<'_, PyAny>,
+        save_as: Option<String>,
+    ) -> PyResult<PyResponse> {
+        let item_value = py_any_to_json_value(py, item)?;
+        let response = self
+            .inner
+            .update_list_item(
+                &site_id,
+                &list_id,
+                &item_id,
+                item_value,
+                save_as.as_ref().map(PathBuf::from),
+            )
+            .map_err(into_pyerr)?;
+        py_response_from(response)
+    }
 }
 
 #[pymodule]
