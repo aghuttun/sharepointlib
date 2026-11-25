@@ -233,7 +233,7 @@ if response.status_code == 200:
 ```
 
 ```python
-# List list items with selected fields
+# Request up to 5,000 list items with selected fields
 response = sharepoint.list_list_items(
     site_id="companygroup.sharepoint.com,abc,def",
     list_id="1234-5678-90ab-cdef",

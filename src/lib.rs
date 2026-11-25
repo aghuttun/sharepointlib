@@ -1059,6 +1059,7 @@ impl SharePoint {
         let query = vec![
             ("select".to_string(), fields.to_string()),
             ("expand".to_string(), "fields".to_string()),
+            ("$top".to_string(), "5000".to_string()),
         ];
 
         let response = self.request(Method::GET, &endpoint, Some(&query), None)?;
